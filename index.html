@@ -12,38 +12,56 @@
 <body>
   <header class="app-header">
     <h1>Мої витрати</h1>
-    <p class="monthly-total-label">Всього за <span id="month-name"></span>: <span id="monthly-total">$0.00</span></p>
   </header>
 
   <main>
-    <form id="entry-form" novalidate>
-      <div class="field">
-        <label for="day-input">День</label>
-        <input type="number" id="day-input" min="1" max="31" inputmode="numeric" required>
+    <section id="add-screen">
+      <p class="monthly-total-label">Всього за <span id="month-name"></span>: <span id="monthly-total">$0.00</span></p>
+
+      <div id="add-rows"></div>
+
+      <div class="add-actions">
+        <button type="button" id="add-row-btn">+ Додати рядок</button>
+        <button type="button" id="save-all-btn" disabled>Зберегти все</button>
       </div>
 
-      <div class="field">
-        <label id="store-label">Магазин</label>
-        <div id="store-chips" role="group" aria-labelledby="store-label">
-          <button type="button" class="chip" data-store="Walmart">Walmart</button>
-          <button type="button" class="chip" data-store="Dollarama">Dollarama</button>
-          <button type="button" class="chip" data-store="Freshco">Freshco</button>
-          <button type="button" class="chip" data-store="Costco">Costco</button>
-          <button type="button" class="chip chip-add" id="custom-store-btn">+ Додати</button>
-        </div>
+      <section id="entries-list" aria-live="polite"></section>
+      <p id="empty-state" hidden>Поки немає витрат у цьому місяці.</p>
+    </section>
+
+    <section id="reports-screen" hidden>
+      <div class="report-nav">
+        <button type="button" id="report-prev" aria-label="Попередній місяць">‹</button>
+        <span id="report-month-label"></span>
+        <button type="button" id="report-next" aria-label="Наступний місяць">›</button>
       </div>
 
-      <div class="field">
-        <label for="amount-input">Сума ($)</label>
-        <input type="number" id="amount-input" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" required>
+      <p class="report-total">Всього: <span id="report-total">$0.00</span></p>
+
+      <div class="report-block">
+        <h2>По магазинах</h2>
+        <div id="report-breakdown"></div>
       </div>
 
-      <button type="submit" id="add-btn" disabled>Додати</button>
-    </form>
+      <div class="report-block">
+        <p id="report-avg"></p>
+        <p id="report-max"></p>
+      </div>
 
-    <section id="entries-list" aria-live="polite"></section>
-    <p id="empty-state" hidden>Поки немає витрат у цьому місяці.</p>
+      <button type="button" id="download-jpg-btn">Скачати .jpg</button>
+
+      <div class="report-block">
+        <h2>Записи</h2>
+        <section id="report-entries-list"></section>
+        <p id="report-empty-state" hidden>Немає витрат за цей місяць.</p>
+      </div>
+    </section>
   </main>
+
+  <nav class="tab-bar">
+    <button type="button" id="tab-add" class="tab-btn selected">Додати</button>
+    <button type="button" id="tab-reports" class="tab-btn">Звіти</button>
+  </nav>
 
   <script src="app.js"></script>
   <script>

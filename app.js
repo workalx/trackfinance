@@ -45,7 +45,6 @@ function getCurrentMonthYear() {
 }
 
 const entries = loadEntries();
-let selectedStore = null;
 
 const MONTH_NAMES_UK = ['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
 
@@ -103,80 +102,155 @@ function daysInMonth(month, year) {
   return new Date(year, month, 0).getDate();
 }
 
-function renderStoreChips() {
-  const container = document.getElementById('store-chips');
-  const customStores = loadCustomStores();
-  customStores.forEach((name) => {
-    if (container.querySelector(`[data-store="${CSS.escape(name)}"]`)) return;
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'chip';
-    btn.dataset.store = name;
-    btn.textContent = name;
-    container.insertBefore(btn, document.getElementById('custom-store-btn'));
+const FIXED_STORES = ['Walmart', 'Dollarama', 'Freshco', 'Costco'];
+const STORE_OPTION_SENTINEL = '__add_custom__';
+
+function populateStoreOptions(selectEl) {
+  const previousValue = selectEl.value;
+  selectEl.innerHTML = '';
+
+  const blank = document.createElement('option');
+  blank.value = '';
+  blank.textContent = 'Магазин';
+  selectEl.appendChild(blank);
+
+  [...FIXED_STORES, ...loadCustomStores()].forEach((name) => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    selectEl.appendChild(opt);
   });
+
+  const addOpt = document.createElement('option');
+  addOpt.value = STORE_OPTION_SENTINEL;
+  addOpt.textContent = '+ свій';
+  selectEl.appendChild(addOpt);
+
+  if ([...selectEl.options].some((o) => o.value === previousValue)) {
+    selectEl.value = previousValue;
+  }
 }
 
-function selectStore(store) {
-  selectedStore = store;
-  document.querySelectorAll('#store-chips .chip[data-store]').forEach((btn) => {
-    btn.classList.toggle('selected', btn.dataset.store === store);
-  });
-  updateAddButtonState();
+function refreshAllStoreSelects() {
+  document.querySelectorAll('.row-store').forEach(populateStoreOptions);
 }
 
-function updateAddButtonState() {
-  const day = document.getElementById('day-input').value;
-  const amount = document.getElementById('amount-input').value;
-  const valid = day && Number(day) >= 1 && selectedStore && amount && Number(amount) > 0;
-  document.getElementById('add-btn').disabled = !valid;
-}
+function createRow() {
+  const row = document.createElement('div');
+  row.className = 'add-row';
+  row.innerHTML = `
+    <input type="number" class="row-day" min="1" inputmode="numeric" placeholder="День" aria-label="День">
+    <select class="row-store" aria-label="Магазин"></select>
+    <input type="number" class="row-amount" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" aria-label="Сума">
+    <button type="button" class="row-remove" aria-label="Видалити рядок">×</button>
+  `;
 
-function setupForm() {
   const { month, year } = getCurrentMonthYear();
-  const dayInput = document.getElementById('day-input');
-  dayInput.max = String(daysInMonth(month, year));
+  row.querySelector('.row-day').max = String(daysInMonth(month, year));
+  populateStoreOptions(row.querySelector('.row-store'));
 
-  renderStoreChips();
-
-  document.getElementById('store-chips').addEventListener('click', (e) => {
-    const btn = e.target.closest('.chip[data-store]');
-    if (!btn) return;
-    selectStore(btn.dataset.store);
-  });
-
-  document.getElementById('custom-store-btn').addEventListener('click', () => {
+  row.querySelector('.row-store').addEventListener('change', (e) => {
+    if (e.target.value !== STORE_OPTION_SENTINEL) {
+      updateSaveAllButtonState();
+      return;
+    }
     const name = prompt('Назва магазину:');
-    if (!name || !name.trim()) return;
-    const trimmed = name.trim();
+    const trimmed = (name || '').trim();
+    if (!trimmed) {
+      e.target.value = '';
+      updateSaveAllButtonState();
+      return;
+    }
     const customStores = loadCustomStores();
     if (!customStores.includes(trimmed)) {
       customStores.push(trimmed);
       saveCustomStores(customStores);
-      renderStoreChips();
     }
-    selectStore(trimmed);
+    refreshAllStoreSelects();
+    e.target.value = trimmed;
+    updateSaveAllButtonState();
   });
 
-  dayInput.addEventListener('input', updateAddButtonState);
-  document.getElementById('amount-input').addEventListener('input', updateAddButtonState);
+  row.querySelector('.row-day').addEventListener('input', updateSaveAllButtonState);
+  row.querySelector('.row-amount').addEventListener('input', updateSaveAllButtonState);
 
-  document.getElementById('entry-form').addEventListener('submit', (e) => {
-    e.preventDefault();
+  row.querySelector('.row-remove').addEventListener('click', () => {
+    if (document.querySelectorAll('.add-row').length <= 1) return;
+    row.remove();
+    updateSaveAllButtonState();
+  });
+
+  return row;
+}
+
+function rowState(row) {
+  const dayRaw = row.querySelector('.row-day').value;
+  const store = row.querySelector('.row-store').value;
+  const amountRaw = row.querySelector('.row-amount').value;
+  const empty = !dayRaw && !store && !amountRaw;
+
+  const { month, year } = getCurrentMonthYear();
+  const day = Number(dayRaw);
+  const amount = Number(amountRaw);
+  const valid = !!dayRaw && day >= 1 && day <= daysInMonth(month, year) &&
+    !!store && store !== STORE_OPTION_SENTINEL &&
+    !!amountRaw && amount > 0;
+
+  return { empty, valid, day, store, amount };
+}
+
+function updateSaveAllButtonState() {
+  const rows = [...document.querySelectorAll('.add-row')];
+  const states = rows.map(rowState);
+
+  rows.forEach((row, i) => {
+    row.classList.toggle('invalid', !states[i].empty && !states[i].valid);
+  });
+
+  const anyValid = states.some((s) => s.valid);
+  const anyPartiallyInvalid = states.some((s) => !s.empty && !s.valid);
+  document.getElementById('save-all-btn').disabled = !anyValid || anyPartiallyInvalid;
+}
+
+function setupAddForm() {
+  const rowsContainer = document.getElementById('add-rows');
+  rowsContainer.appendChild(createRow());
+  updateSaveAllButtonState();
+
+  document.getElementById('add-row-btn').addEventListener('click', () => {
+    rowsContainer.appendChild(createRow());
+    updateSaveAllButtonState();
+  });
+
+  document.getElementById('save-all-btn').addEventListener('click', () => {
+    const rows = [...document.querySelectorAll('.add-row')];
+    const states = rows.map(rowState);
+    if (states.some((s) => !s.empty && !s.valid) || !states.some((s) => s.valid)) return;
+
     const { month, year } = getCurrentMonthYear();
-    const day = Number(dayInput.value);
-    const amount = Number(document.getElementById('amount-input').value);
-    if (!day || day < 1 || day > daysInMonth(month, year) || !selectedStore || !amount || amount <= 0) return;
-
-    entries.push({ id: makeId(), day, month, year, store: selectedStore, amount });
+    states.filter((s) => s.valid).forEach((s) => {
+      entries.push({ id: makeId(), day: s.day, month, year, store: s.store, amount: s.amount });
+    });
     saveEntries(entries);
 
-    e.target.reset();
-    selectedStore = null;
-    document.querySelectorAll('#store-chips .chip.selected').forEach((btn) => btn.classList.remove('selected'));
-    updateAddButtonState();
+    rowsContainer.innerHTML = '';
+    rowsContainer.appendChild(createRow());
+    updateSaveAllButtonState();
     render();
   });
+}
+
+function switchTab(tabName) {
+  const isAdd = tabName === 'add';
+  document.getElementById('add-screen').hidden = !isAdd;
+  document.getElementById('reports-screen').hidden = isAdd;
+  document.getElementById('tab-add').classList.toggle('selected', isAdd);
+  document.getElementById('tab-reports').classList.toggle('selected', !isAdd);
+}
+
+function setupTabs() {
+  document.getElementById('tab-add').addEventListener('click', () => switchTab('add'));
+  document.getElementById('tab-reports').addEventListener('click', () => switchTab('reports'));
 }
 
 function deleteEntry(id) {
@@ -226,7 +300,7 @@ function editEntry(id) {
     if (!customStores.includes(entry.store)) {
       customStores.push(entry.store);
       saveCustomStores(customStores);
-      renderStoreChips();
+      refreshAllStoreSelects();
     }
   }
 
@@ -247,6 +321,7 @@ document.getElementById('entries-list').addEventListener('click', (e) => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-  setupForm();
+  setupTabs();
+  setupAddForm();
   render();
 });
