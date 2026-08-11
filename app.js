@@ -179,6 +179,73 @@ function setupForm() {
   });
 }
 
+function deleteEntry(id) {
+  const idx = entries.findIndex((e) => e.id === id);
+  if (idx === -1) return;
+  entries.splice(idx, 1);
+  saveEntries(entries);
+  render();
+}
+
+function editEntry(id) {
+  const entry = entries.find((e) => e.id === id);
+  if (!entry) return;
+
+  const { month, year } = getCurrentMonthYear();
+  const maxDay = daysInMonth(month, year);
+
+  const newDayRaw = prompt(`День (1-${maxDay}):`, String(entry.day));
+  if (newDayRaw === null) return;
+  const newDay = Number(newDayRaw);
+  if (!newDay || newDay < 1 || newDay > maxDay) {
+    alert('Некоректний день.');
+    return;
+  }
+
+  const newStore = prompt('Магазин:', entry.store);
+  if (newStore === null) return;
+  if (!newStore.trim()) {
+    alert('Назва магазину не може бути порожньою.');
+    return;
+  }
+
+  const newAmountRaw = prompt('Сума ($):', String(entry.amount));
+  if (newAmountRaw === null) return;
+  const newAmount = Number(newAmountRaw);
+  if (!newAmount || newAmount <= 0) {
+    alert('Некоректна сума.');
+    return;
+  }
+
+  entry.day = newDay;
+  entry.store = newStore.trim();
+  entry.amount = newAmount;
+
+  if (!['Walmart', 'Dollarama', 'Freshco', 'Costco'].includes(entry.store)) {
+    const customStores = loadCustomStores();
+    if (!customStores.includes(entry.store)) {
+      customStores.push(entry.store);
+      saveCustomStores(customStores);
+      renderStoreChips();
+    }
+  }
+
+  saveEntries(entries);
+  render();
+}
+
+document.getElementById('entries-list').addEventListener('click', (e) => {
+  const row = e.target.closest('.entry-row');
+  if (!row) return;
+  const id = row.dataset.id;
+
+  if (e.target.closest('.delete-btn')) {
+    if (confirm('Видалити цей запис?')) deleteEntry(id);
+  } else if (e.target.closest('.edit-btn')) {
+    editEntry(id);
+  }
+});
+
 document.addEventListener('DOMContentLoaded', () => {
   setupForm();
   render();
