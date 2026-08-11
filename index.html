@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Мої витрати</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <h1>Мої витрати</h1>
+    <p class="monthly-total-label">Всього за <span id="month-name"></span>: <span id="monthly-total">$0.00</span></p>
+  </header>
+
+  <main>
+    <form id="entry-form" novalidate>
+      <div class="field">
+        <label for="day-input">День</label>
+        <input type="number" id="day-input" min="1" max="31" inputmode="numeric" required>
+      </div>
+
+      <div class="field">
+        <label id="store-label">Магазин</label>
+        <div id="store-chips" role="group" aria-labelledby="store-label">
+          <button type="button" class="chip" data-store="Walmart">Walmart</button>
+          <button type="button" class="chip" data-store="Dollarama">Dollarama</button>
+          <button type="button" class="chip" data-store="Freshco">Freshco</button>
+          <button type="button" class="chip" data-store="Costco">Costco</button>
+          <button type="button" class="chip chip-add" id="custom-store-btn">+ Додати</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="amount-input">Сума ($)</label>
+        <input type="number" id="amount-input" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" required>
+      </div>
+
+      <button type="submit" id="add-btn" disabled>Додати</button>
+    </form>
+
+    <section id="entries-list" aria-live="polite"></section>
+    <p id="empty-state" hidden>Поки немає витрат у цьому місяці.</p>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
+    }
+  </script>
+</body>
+</html>
