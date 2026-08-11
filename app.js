@@ -47,8 +47,56 @@ function getCurrentMonthYear() {
 const entries = loadEntries();
 let selectedStore = null;
 
+const MONTH_NAMES_UK = ['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
+
+function formatAmount(n) {
+  return `$${n.toFixed(2)}`;
+}
+
 function render() {
-  // Implemented in Task 4 (rendering entries list + monthly total).
+  const { month, year } = getCurrentMonthYear();
+  document.getElementById('month-name').textContent = MONTH_NAMES_UK[month - 1];
+
+  const monthEntries = entries
+    .filter((e) => e.month === month && e.year === year)
+    .sort((a, b) => b.day - a.day);
+
+  const total = monthEntries.reduce((sum, e) => sum + e.amount, 0);
+  document.getElementById('monthly-total').textContent = formatAmount(total);
+
+  const list = document.getElementById('entries-list');
+  const emptyState = document.getElementById('empty-state');
+  list.innerHTML = '';
+
+  if (monthEntries.length === 0) {
+    emptyState.hidden = false;
+    return;
+  }
+  emptyState.hidden = true;
+
+  monthEntries.forEach((entry) => {
+    const row = document.createElement('div');
+    row.className = 'entry-row';
+    row.dataset.id = entry.id;
+    row.innerHTML = `
+      <div class="entry-main">
+        <span class="entry-store">${escapeHtml(entry.store)}</span>
+        <span class="entry-day">${entry.day} ${MONTH_NAMES_UK[entry.month - 1]}</span>
+      </div>
+      <span class="entry-amount">${formatAmount(entry.amount)}</span>
+      <div class="entry-actions">
+        <button type="button" class="edit-btn" aria-label="Редагувати">✎</button>
+        <button type="button" class="delete-btn" aria-label="Видалити">🗑</button>
+      </div>
+    `;
+    list.appendChild(row);
+  });
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
 }
 
 function daysInMonth(month, year) {
