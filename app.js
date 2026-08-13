@@ -52,43 +52,86 @@ function formatAmount(n) {
   return `$${n.toFixed(2)}`;
 }
 
+let listSortMode = 'date';
+
+function groupEntriesByDay(list) {
+  const map = new Map();
+  list.forEach((entry, idx) => {
+    const key = `${entry.year}-${entry.month}-${entry.day}`;
+    if (!map.has(key)) {
+      map.set(key, { day: entry.day, month: entry.month, year: entry.year, entries: [], maxIndex: idx });
+    }
+    const block = map.get(key);
+    block.entries.push(entry);
+    block.maxIndex = Math.max(block.maxIndex, idx);
+  });
+  return [...map.values()];
+}
+
 function render() {
   const { month, year } = getCurrentMonthYear();
   document.getElementById('month-name').textContent = MONTH_NAMES_UK[month - 1];
 
-  const monthEntries = entries
-    .filter((e) => e.month === month && e.year === year)
-    .sort((a, b) => b.day - a.day);
-
+  const monthEntries = entries.filter((e) => e.month === month && e.year === year);
   const total = monthEntries.reduce((sum, e) => sum + e.amount, 0);
   document.getElementById('monthly-total').textContent = formatAmount(total);
+
+  const blocks = groupEntriesByDay(entries);
+  blocks.sort((a, b) => {
+    if (listSortMode === 'order') return b.maxIndex - a.maxIndex;
+    if (a.year !== b.year) return b.year - a.year;
+    if (a.month !== b.month) return b.month - a.month;
+    return b.day - a.day;
+  });
 
   const list = document.getElementById('entries-list');
   const emptyState = document.getElementById('empty-state');
   list.innerHTML = '';
 
-  if (monthEntries.length === 0) {
+  if (blocks.length === 0) {
     emptyState.hidden = false;
     return;
   }
   emptyState.hidden = true;
 
-  monthEntries.forEach((entry) => {
-    const row = document.createElement('div');
-    row.className = 'entry-row';
-    row.dataset.id = entry.id;
-    row.innerHTML = `
-      <div class="entry-main">
-        <span class="entry-store">${escapeHtml(entry.store)}</span>
-        <span class="entry-day">${entry.day} ${MONTH_NAMES_UK[entry.month - 1]}</span>
-      </div>
-      <span class="entry-amount">${formatAmount(entry.amount)}</span>
-      <div class="entry-actions">
-        <button type="button" class="edit-btn" aria-label="Редагувати">✎</button>
-        <button type="button" class="delete-btn" aria-label="Видалити">🗑</button>
-      </div>
-    `;
-    list.appendChild(row);
+  blocks.forEach((block) => {
+    const blockEl = document.createElement('div');
+    blockEl.className = 'day-block';
+
+    const header = document.createElement('div');
+    header.className = 'day-block-header';
+    header.textContent = formatFullDateUk(block.day, block.month, block.year);
+    blockEl.appendChild(header);
+
+    block.entries
+      .slice()
+      .sort((a, b) => entries.indexOf(b) - entries.indexOf(a))
+      .forEach((entry) => {
+        const row = document.createElement('div');
+        row.className = 'entry-row';
+        row.dataset.id = entry.id;
+        row.innerHTML = `
+          <div class="entry-main">
+            <span class="entry-store">${escapeHtml(entry.store)}</span>
+          </div>
+          <span class="entry-amount">${formatAmount(entry.amount)}</span>
+          <div class="entry-actions">
+            <button type="button" class="edit-btn" aria-label="Редагувати">✎</button>
+            <button type="button" class="delete-btn" aria-label="Видалити">🗑</button>
+          </div>
+        `;
+        blockEl.appendChild(row);
+      });
+
+    list.appendChild(blockEl);
+  });
+}
+
+function setupSortToggle() {
+  document.getElementById('sort-toggle-btn').addEventListener('click', () => {
+    listSortMode = listSortMode === 'date' ? 'order' : 'date';
+    document.getElementById('sort-toggle-btn').textContent = listSortMode === 'date' ? 'За датою' : 'За порядком додавання';
+    render();
   });
 }
 
@@ -368,8 +411,7 @@ function editEntry(id) {
   const entry = entries.find((e) => e.id === id);
   if (!entry) return;
 
-  const { month, year } = getCurrentMonthYear();
-  const maxDay = daysInMonth(month, year);
+  const maxDay = daysInMonth(entry.month, entry.year);
 
   const newDayRaw = prompt(`День (1-${maxDay}):`, String(entry.day));
   if (newDayRaw === null) return;
@@ -625,6 +667,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupTabs();
   setupCalendar();
   setupAddForm();
+  setupSortToggle();
   setupReports();
   setupJpgExport();
   render();
