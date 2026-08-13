@@ -663,12 +663,20 @@ function setupJpgExport() {
   document.getElementById('download-jpg-btn').addEventListener('click', exportReportAsJpg);
 }
 
+function runSetup(name, fn) {
+  try {
+    fn();
+  } catch (err) {
+    console.error(`[setup] ${name} failed, continuing with the rest of the app:`, err);
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-  setupTabs();
-  setupCalendar();
-  setupAddForm();
-  setupSortToggle();
-  setupReports();
-  setupJpgExport();
-  render();
+  runSetup('setupTabs', setupTabs);
+  runSetup('setupCalendar', setupCalendar);
+  runSetup('setupAddForm', setupAddForm);
+  runSetup('setupSortToggle', setupSortToggle);
+  runSetup('setupReports', setupReports);
+  runSetup('setupJpgExport', setupJpgExport);
+  runSetup('render', render);
 });
