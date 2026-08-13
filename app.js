@@ -104,6 +104,116 @@ function daysInMonth(month, year) {
 
 const FIXED_STORES = ['Walmart', 'Dollarama', 'Freshco', 'Costco'];
 const STORE_OPTION_SENTINEL = '__add_custom__';
+const MONTHS_BACK_LIMIT = 20;
+
+const MONTH_NAMES_UK_GENITIVE = ['січня','лютого','березня','квітня','травня','червня','липня','серпня','вересня','жовтня','листопада','грудня'];
+
+function formatFullDateUk(day, month, year) {
+  return `${day} ${MONTH_NAMES_UK_GENITIVE[month - 1]} ${year}`;
+}
+
+function todayDate() {
+  const now = new Date();
+  return { day: now.getDate(), month: now.getMonth() + 1, year: now.getFullYear() };
+}
+
+function addMonths(month, year, delta) {
+  const d = new Date(year, month - 1 + delta, 1);
+  return { month: d.getMonth() + 1, year: d.getFullYear() };
+}
+
+function isSameMonth(a, b) {
+  return a.month === b.month && a.year === b.year;
+}
+
+let selectedDate = todayDate();
+let calCursor = { month: selectedDate.month, year: selectedDate.year };
+
+function updateDateFieldLabel() {
+  const today = todayDate();
+  const label = document.getElementById('date-field-label');
+  if (selectedDate.day === today.day && selectedDate.month === today.month && selectedDate.year === today.year) {
+    label.textContent = `Сьогодні, ${formatFullDateUk(selectedDate.day, selectedDate.month, selectedDate.year)}`;
+  } else {
+    label.textContent = formatFullDateUk(selectedDate.day, selectedDate.month, selectedDate.year);
+  }
+}
+
+function renderCalendarGrid() {
+  const today = todayDate();
+  document.getElementById('cal-month-label').textContent = `${MONTH_NAMES_UK[calCursor.month - 1]} ${calCursor.year}`;
+
+  const earliest = addMonths(today.month, today.year, -MONTHS_BACK_LIMIT);
+  document.getElementById('cal-prev').disabled = isSameMonth(calCursor, earliest);
+  document.getElementById('cal-next').disabled = isSameMonth(calCursor, today);
+
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+
+  const firstOfMonth = new Date(calCursor.year, calCursor.month - 1, 1);
+  const leadingBlanks = (firstOfMonth.getDay() + 6) % 7; // Monday-first offset
+  for (let i = 0; i < leadingBlanks; i++) {
+    const blank = document.createElement('span');
+    blank.className = 'cal-day blank';
+    grid.appendChild(blank);
+  }
+
+  const totalDays = daysInMonth(calCursor.month, calCursor.year);
+  for (let day = 1; day <= totalDays; day++) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'cal-day';
+    btn.textContent = String(day);
+
+    const isFuture = calCursor.year === today.year && calCursor.month === today.month && day > today.day;
+    if (isFuture) btn.disabled = true;
+
+    if (calCursor.year === today.year && calCursor.month === today.month && day === today.day) {
+      btn.classList.add('today');
+    }
+    if (calCursor.year === selectedDate.year && calCursor.month === selectedDate.month && day === selectedDate.day) {
+      btn.classList.add('selected');
+    }
+
+    btn.addEventListener('click', () => {
+      selectedDate = { day, month: calCursor.month, year: calCursor.year };
+      updateDateFieldLabel();
+      closeCalendar();
+    });
+
+    grid.appendChild(btn);
+  }
+}
+
+function openCalendar() {
+  calCursor = { month: selectedDate.month, year: selectedDate.year };
+  renderCalendarGrid();
+  const backdrop = document.getElementById('calendar-backdrop');
+  backdrop.hidden = false;
+  requestAnimationFrame(() => backdrop.classList.add('open'));
+}
+
+function closeCalendar() {
+  const backdrop = document.getElementById('calendar-backdrop');
+  backdrop.classList.remove('open');
+  setTimeout(() => { backdrop.hidden = true; }, 220);
+}
+
+function setupCalendar() {
+  document.getElementById('date-field-btn').addEventListener('click', openCalendar);
+  document.getElementById('calendar-backdrop').addEventListener('click', (e) => {
+    if (e.target.id === 'calendar-backdrop') closeCalendar();
+  });
+  document.getElementById('cal-close').addEventListener('click', closeCalendar);
+  document.getElementById('cal-prev').addEventListener('click', () => {
+    calCursor = addMonths(calCursor.month, calCursor.year, -1);
+    renderCalendarGrid();
+  });
+  document.getElementById('cal-next').addEventListener('click', () => {
+    calCursor = addMonths(calCursor.month, calCursor.year, 1);
+    renderCalendarGrid();
+  });
+}
 
 function populateStoreOptions(selectEl) {
   const previousValue = selectEl.value;
@@ -139,14 +249,11 @@ function createRow() {
   const row = document.createElement('div');
   row.className = 'add-row';
   row.innerHTML = `
-    <input type="number" class="row-day" min="1" inputmode="numeric" placeholder="День" aria-label="День">
     <select class="row-store" aria-label="Магазин"></select>
     <input type="number" class="row-amount" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" aria-label="Сума">
     <button type="button" class="row-remove" aria-label="Видалити рядок">×</button>
   `;
 
-  const { month, year } = getCurrentMonthYear();
-  row.querySelector('.row-day').max = String(daysInMonth(month, year));
   populateStoreOptions(row.querySelector('.row-store'));
 
   row.querySelector('.row-store').addEventListener('change', (e) => {
@@ -171,7 +278,6 @@ function createRow() {
     updateSaveAllButtonState();
   });
 
-  row.querySelector('.row-day').addEventListener('input', updateSaveAllButtonState);
   row.querySelector('.row-amount').addEventListener('input', updateSaveAllButtonState);
 
   row.querySelector('.row-remove').addEventListener('click', () => {
@@ -184,19 +290,14 @@ function createRow() {
 }
 
 function rowState(row) {
-  const dayRaw = row.querySelector('.row-day').value;
   const store = row.querySelector('.row-store').value;
   const amountRaw = row.querySelector('.row-amount').value;
-  const empty = !dayRaw && !store && !amountRaw;
+  const empty = !store && !amountRaw;
 
-  const { month, year } = getCurrentMonthYear();
-  const day = Number(dayRaw);
   const amount = Number(amountRaw);
-  const valid = !!dayRaw && day >= 1 && day <= daysInMonth(month, year) &&
-    !!store && store !== STORE_OPTION_SENTINEL &&
-    !!amountRaw && amount > 0;
+  const valid = !!store && store !== STORE_OPTION_SENTINEL && !!amountRaw && amount > 0;
 
-  return { empty, valid, day, store, amount };
+  return { empty, valid, store, amount };
 }
 
 function updateSaveAllButtonState() {
@@ -216,6 +317,7 @@ function setupAddForm() {
   const rowsContainer = document.getElementById('add-rows');
   rowsContainer.appendChild(createRow());
   updateSaveAllButtonState();
+  updateDateFieldLabel();
 
   document.getElementById('add-row-btn').addEventListener('click', () => {
     rowsContainer.appendChild(createRow());
@@ -227,15 +329,16 @@ function setupAddForm() {
     const states = rows.map(rowState);
     if (states.some((s) => !s.empty && !s.valid) || !states.some((s) => s.valid)) return;
 
-    const { month, year } = getCurrentMonthYear();
     states.filter((s) => s.valid).forEach((s) => {
-      entries.push({ id: makeId(), day: s.day, month, year, store: s.store, amount: s.amount });
+      entries.push({ id: makeId(), day: selectedDate.day, month: selectedDate.month, year: selectedDate.year, store: s.store, amount: s.amount });
     });
     saveEntries(entries);
 
     rowsContainer.innerHTML = '';
     rowsContainer.appendChild(createRow());
     updateSaveAllButtonState();
+    selectedDate = todayDate();
+    updateDateFieldLabel();
     render();
   });
 }
@@ -520,6 +623,7 @@ function setupJpgExport() {
 
 document.addEventListener('DOMContentLoaded', () => {
   setupTabs();
+  setupCalendar();
   setupAddForm();
   setupReports();
   setupJpgExport();

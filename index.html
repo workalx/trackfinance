@@ -18,6 +18,11 @@
     <section id="add-screen">
       <p class="monthly-total-label">Всього за <span id="month-name"></span>: <span id="monthly-total">$0.00</span></p>
 
+      <button type="button" id="date-field-btn" class="date-field">
+        <span id="date-field-label">Сьогодні</span>
+        <span class="date-field-chevron" aria-hidden="true">▾</span>
+      </button>
+
       <div id="add-rows"></div>
 
       <div class="add-actions">
@@ -25,9 +30,29 @@
         <button type="button" id="save-all-btn" disabled>Зберегти все</button>
       </div>
 
+      <div class="list-header">
+        <h2>Мої витрати</h2>
+        <button type="button" id="sort-toggle-btn">За датою</button>
+      </div>
       <section id="entries-list" aria-live="polite"></section>
-      <p id="empty-state" hidden>Поки немає витрат у цьому місяці.</p>
+      <p id="empty-state" hidden>Поки немає витрат.</p>
     </section>
+
+    <div id="calendar-backdrop" class="calendar-backdrop" hidden>
+      <div id="calendar-sheet" class="calendar-sheet" role="dialog" aria-modal="true" aria-label="Оберіть дату">
+        <div class="calendar-handle"></div>
+        <div class="calendar-header">
+          <button type="button" id="cal-prev" aria-label="Попередній місяць">‹</button>
+          <span id="cal-month-label"></span>
+          <button type="button" id="cal-next" aria-label="Наступний місяць">›</button>
+        </div>
+        <div class="calendar-weekdays">
+          <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Нд</span>
+        </div>
+        <div id="cal-grid" class="calendar-grid"></div>
+        <button type="button" id="cal-close" class="calendar-close">Закрити</button>
+      </div>
+    </div>
 
     <section id="reports-screen" hidden>
       <div class="report-nav">
