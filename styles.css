@@ -263,6 +263,10 @@ main { max-width: 480px; margin: 0 auto; padding: 1rem; }
   transition: opacity 200ms ease-out;
 }
 
+.calendar-backdrop[hidden] {
+  display: none;
+}
+
 .calendar-backdrop.open { opacity: 1; }
 
 .calendar-sheet {

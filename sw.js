@@ -1,8 +1,8 @@
-const CACHE_NAME = 'expense-tracker-v5';
+const CACHE_NAME = 'expense-tracker-v6';
 const ASSETS = [
   './',
   './index.html',
-  './styles.css?v=1',
+  './styles.css?v=2',
   './app.js?v=1',
   './manifest.json',
   './icons/icon-192.png',
