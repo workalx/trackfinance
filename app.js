@@ -272,13 +272,27 @@ function renderCalendarGrid() {
     if (calCursor.year === today.year && calCursor.month === today.month && day === today.day) {
       btn.classList.add('today');
     }
-    if (calCursor.year === selectedDate.year && calCursor.month === selectedDate.month && day === selectedDate.day) {
+    const highlightDate = calendarTarget === 'period-from' ? periodFrom
+      : calendarTarget === 'period-to' ? periodTo
+      : selectedDate;
+    if (calCursor.year === highlightDate.year && calCursor.month === highlightDate.month && day === highlightDate.day) {
       btn.classList.add('selected');
     }
 
     btn.addEventListener('click', () => {
-      selectedDate = { day, month: calCursor.month, year: calCursor.year };
-      updateDateFieldLabel();
+      const picked = { day, month: calCursor.month, year: calCursor.year };
+      if (calendarTarget === 'period-from') {
+        periodFrom = picked;
+        updatePeriodFieldLabels();
+        renderReports();
+      } else if (calendarTarget === 'period-to') {
+        periodTo = picked;
+        updatePeriodFieldLabels();
+        renderReports();
+      } else {
+        selectedDate = picked;
+        updateDateFieldLabel();
+      }
       closeCalendar();
     });
 
@@ -286,8 +300,14 @@ function renderCalendarGrid() {
   }
 }
 
-function openCalendar() {
-  calCursor = { month: selectedDate.month, year: selectedDate.year };
+let calendarTarget = 'add'; // 'add' | 'period-from' | 'period-to'
+
+function openCalendar(target) {
+  calendarTarget = target || 'add';
+  const base = calendarTarget === 'period-from' ? periodFrom
+    : calendarTarget === 'period-to' ? periodTo
+    : selectedDate;
+  calCursor = { month: base.month, year: base.year };
   renderCalendarGrid();
   const backdrop = document.getElementById('calendar-backdrop');
   backdrop.hidden = false;
@@ -301,7 +321,7 @@ function closeCalendar() {
 }
 
 function setupCalendar() {
-  document.getElementById('date-field-btn').addEventListener('click', openCalendar);
+  document.getElementById('date-field-btn').addEventListener('click', () => openCalendar('add'));
   document.getElementById('calendar-backdrop').addEventListener('click', (e) => {
     if (e.target.id === 'calendar-backdrop') closeCalendar();
   });
@@ -600,14 +620,6 @@ document.getElementById('entries-list').addEventListener('click', (e) => {
   }
 });
 
-let reportCursor = getCurrentMonthYear();
-
-function computeMonthEntries(month, year) {
-  return entries
-    .filter((e) => e.month === month && e.year === year)
-    .sort((a, b) => a.day - b.day);
-}
-
 function computeBreakdown(monthEntries) {
   const totals = new Map();
   monthEntries.forEach((e) => {
@@ -618,184 +630,186 @@ function computeBreakdown(monthEntries) {
     .sort((a, b) => b.amount - a.amount);
 }
 
-function computeDayStats(monthEntries) {
-  if (monthEntries.length === 0) {
-    return { avg: 0, maxDay: null, maxAmount: 0 };
-  }
-  const byDay = new Map();
-  monthEntries.forEach((e) => {
-    byDay.set(e.day, (byDay.get(e.day) || 0) + e.amount);
-  });
-  const total = [...byDay.values()].reduce((sum, v) => sum + v, 0);
-  const avg = total / byDay.size;
-
-  let maxDay = null;
-  let maxAmount = -Infinity;
-  byDay.forEach((amount, day) => {
-    if (amount > maxAmount) {
-      maxAmount = amount;
-      maxDay = day;
-    }
-  });
-
-  return { avg, maxDay, maxAmount };
-}
-
 function hasEntriesBefore(month, year) {
   return entries.some((e) => e.year < year || (e.year === year && e.month < month));
 }
 
-function renderReports() {
-  const { month, year } = reportCursor;
-  document.getElementById('report-month-label').textContent = `${MONTH_NAMES_UK[month - 1]} ${year}`;
+let reportMode = 'month';
+let reportCursor = getCurrentMonthYear();
+let reportYearCursor = getCurrentMonthYear().year;
 
-  const { month: curMonth, year: curYear } = getCurrentMonthYear();
-  const isCurrentMonth = month === curMonth && year === curYear;
-  document.getElementById('report-next').disabled = isCurrentMonth;
-  document.getElementById('report-prev').disabled = !hasEntriesBefore(month, year);
-
-  const monthEntries = computeMonthEntries(month, year);
-  const total = monthEntries.reduce((sum, e) => sum + e.amount, 0);
-  document.getElementById('report-total').textContent = formatAmount(total);
-
-  const breakdown = computeBreakdown(monthEntries);
-  const breakdownEl = document.getElementById('report-breakdown');
-  breakdownEl.innerHTML = breakdown.length === 0
-    ? '<p class="report-line">Немає даних</p>'
-    : breakdown.map((b) => `<div class="report-line"><span>${escapeHtml(b.store)}</span><span>${formatAmount(b.amount)}</span></div>`).join('');
-
-  const { avg, maxDay, maxAmount } = computeDayStats(monthEntries);
-  document.getElementById('report-avg').textContent = `Середня витрата за день: ${formatAmount(avg)}`;
-  document.getElementById('report-max').textContent = maxDay
-    ? `Максимальна витрата за день: ${formatAmount(maxAmount)} (${maxDay} ${MONTH_NAMES_UK[month - 1]})`
-    : 'Максимальна витрата за день: -';
-
-  const listEl = document.getElementById('report-entries-list');
-  const emptyEl = document.getElementById('report-empty-state');
-  listEl.innerHTML = '';
-  if (monthEntries.length === 0) {
-    emptyEl.hidden = false;
-  } else {
-    emptyEl.hidden = true;
-    monthEntries.forEach((entry) => {
-      const row = document.createElement('div');
-      row.className = 'entry-row';
-      row.innerHTML = `
-        <div class="entry-main">
-          <span class="entry-store">${escapeHtml(entry.store)}</span>
-          <span class="entry-day">${entry.day} ${MONTH_NAMES_UK[entry.month - 1]}</span>
-        </div>
-        <span class="entry-amount">${formatAmount(entry.amount)}</span>
-      `;
-      listEl.appendChild(row);
-    });
-  }
+function computeFolderEntries(list, folder) {
+  return list.filter((e) => e.folder === folder);
 }
 
-function stepReportMonth(delta) {
-  let { month, year } = reportCursor;
-  month += delta;
-  if (month < 1) { month = 12; year -= 1; }
-  if (month > 12) { month = 1; year += 1; }
-  reportCursor = { month, year };
+function computePeriodEntries(month, year) {
+  return entries.filter((e) => e.month === month && e.year === year);
+}
+
+function computeYearEntries(year) {
+  return entries.filter((e) => e.year === year);
+}
+
+function renderFolderBreakdownBlock(container, listForTotals) {
+  allFolders().forEach((folder) => {
+    const folderEntries = computeFolderEntries(listForTotals, folder);
+    const folderTotal = folderEntries.reduce((sum, e) => sum + e.amount, 0);
+
+    const card = document.createElement('div');
+    card.className = 'folder-report-card';
+    card.innerHTML = `
+      <div class="folder-report-header">
+        <span>${escapeHtml(folder)}</span>
+        <span>${formatAmount(folderTotal)}</span>
+      </div>
+      <div class="folder-report-breakdown"></div>
+    `;
+
+    const breakdown = computeBreakdown(folderEntries);
+    const breakdownEl = card.querySelector('.folder-report-breakdown');
+    breakdownEl.innerHTML = breakdown.length === 0
+      ? '<p class="report-line">Немає даних</p>'
+      : breakdown.map((b) => `<div class="report-line"><span>${escapeHtml(b.store)}</span><span>${formatAmount(b.amount)}</span></div>`).join('');
+
+    container.appendChild(card);
+  });
+}
+
+function renderMonthOrYearReport() {
+  const list = reportMode === 'month'
+    ? computePeriodEntries(reportCursor.month, reportCursor.year)
+    : computeYearEntries(reportYearCursor);
+
+  document.getElementById('report-period-label').textContent = reportMode === 'month'
+    ? `${MONTH_NAMES_UK[reportCursor.month - 1]} ${reportCursor.year}`
+    : String(reportYearCursor);
+
+  const { month: curMonth, year: curYear } = getCurrentMonthYear();
+  if (reportMode === 'month') {
+    document.getElementById('report-next').disabled = reportCursor.month === curMonth && reportCursor.year === curYear;
+    document.getElementById('report-prev').disabled = !hasEntriesBefore(reportCursor.month, reportCursor.year);
+  } else {
+    document.getElementById('report-next').disabled = reportYearCursor >= curYear;
+    document.getElementById('report-prev').disabled = !entries.some((e) => e.year < reportYearCursor);
+  }
+
+  const total = list.reduce((sum, e) => sum + e.amount, 0);
+  const content = document.getElementById('report-content');
+  content.innerHTML = `<p class="report-grand-total">Всього: <span>${formatAmount(total)}</span></p>`;
+
+  renderFolderBreakdownBlock(content, list);
+}
+
+function stepReportPeriod(delta) {
+  if (reportMode === 'month') {
+    let { month, year } = reportCursor;
+    month += delta;
+    if (month < 1) { month = 12; year -= 1; }
+    if (month > 12) { month = 1; year += 1; }
+    reportCursor = { month, year };
+  } else if (reportMode === 'year') {
+    reportYearCursor += delta;
+  }
   renderReports();
 }
 
+function renderReports() {
+  const nav = document.getElementById('report-nav');
+  const pickers = document.getElementById('report-period-pickers');
+  nav.hidden = reportMode === 'period';
+  pickers.hidden = reportMode !== 'period';
+
+  if (reportMode === 'period') {
+    renderPeriodReport();
+  } else {
+    renderMonthOrYearReport();
+  }
+}
+
 function setupReports() {
-  document.getElementById('report-prev').addEventListener('click', () => stepReportMonth(-1));
-  document.getElementById('report-next').addEventListener('click', () => stepReportMonth(1));
+  document.getElementById('report-prev').addEventListener('click', () => stepReportPeriod(-1));
+  document.getElementById('report-next').addEventListener('click', () => stepReportPeriod(1));
+
+  document.querySelectorAll('.report-mode-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      reportMode = btn.dataset.mode;
+      document.querySelectorAll('.report-mode-btn').forEach((b) => b.classList.toggle('selected', b === btn));
+      renderReports();
+    });
+  });
+
+  document.getElementById('period-from-btn').addEventListener('click', () => openCalendar('period-from'));
+  document.getElementById('period-to-btn').addEventListener('click', () => openCalendar('period-to'));
 
   document.getElementById('tab-reports').addEventListener('click', () => {
     reportCursor = getCurrentMonthYear();
+    reportYearCursor = getCurrentMonthYear().year;
     renderReports();
   });
 }
 
-function exportReportAsJpg() {
-  const { month, year } = reportCursor;
-  const monthEntries = computeMonthEntries(month, year);
-  const breakdown = computeBreakdown(monthEntries);
-  const total = monthEntries.reduce((sum, e) => sum + e.amount, 0);
-  const { avg, maxDay, maxAmount } = computeDayStats(monthEntries);
-
-  const width = 720;
-  const padding = 28;
-  const lineHeight = 30;
-  const breakdownLines = Math.max(breakdown.length, 1);
-  const entryLines = Math.max(monthEntries.length, 1);
-  const totalLines = 2 /* title + spacing */ + 2 /* total + spacing */ + 1 /* breakdown header */ + breakdownLines + 1 /* spacing */ + 2 /* avg + max */ + 1 /* spacing */ + 1 /* entries header */ + entryLines;
-  const height = padding * 2 + totalLines * lineHeight;
-
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d');
-
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, width, height);
-  ctx.fillStyle = '#0f172a';
-  ctx.textBaseline = 'alphabetic';
-
-  let y = padding + 22;
-  ctx.font = 'bold 24px system-ui, sans-serif';
-  ctx.fillText(`Мої витрати — ${MONTH_NAMES_UK[month - 1]} ${year}`, padding, y);
-  y += lineHeight * 2;
-
-  ctx.font = '20px system-ui, sans-serif';
-  ctx.fillText(`Всього: ${formatAmount(total)}`, padding, y);
-  y += lineHeight * 2;
-
-  ctx.font = 'bold 18px system-ui, sans-serif';
-  ctx.fillText('По магазинах:', padding, y);
-  y += lineHeight;
-  ctx.font = '18px system-ui, sans-serif';
-  if (breakdown.length === 0) {
-    ctx.fillText('немає витрат', padding + 16, y);
-    y += lineHeight;
-  } else {
-    breakdown.forEach((b) => {
-      ctx.fillText(`${b.store}: ${formatAmount(b.amount)}`, padding + 16, y);
-      y += lineHeight;
-    });
-  }
-  y += lineHeight;
-
-  ctx.font = '18px system-ui, sans-serif';
-  ctx.fillText(`Середня витрата за день: ${formatAmount(avg)}`, padding, y);
-  y += lineHeight;
-  ctx.fillText(
-    maxDay ? `Максимальна витрата за день: ${formatAmount(maxAmount)} (${maxDay} ${MONTH_NAMES_UK[month - 1]})` : 'Максимальна витрата за день: -',
-    padding, y
-  );
-  y += lineHeight * 2;
-
-  ctx.font = 'bold 18px system-ui, sans-serif';
-  ctx.fillText('Записи:', padding, y);
-  y += lineHeight;
-  ctx.font = '18px system-ui, sans-serif';
-  if (monthEntries.length === 0) {
-    ctx.fillText('немає витрат', padding + 16, y);
-  } else {
-    monthEntries.forEach((e) => {
-      ctx.fillText(`${e.day} ${MONTH_NAMES_UK[month - 1]} — ${e.store} — ${formatAmount(e.amount)}`, padding + 16, y);
-      y += lineHeight;
-    });
-  }
-
-  canvas.toBlob((blob) => {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `vytraty-${year}-${String(month).padStart(2, '0')}.jpg`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }, 'image/jpeg', 0.92);
+function defaultPeriodFrom() {
+  const t = todayDate();
+  const back = addMonths(t.month, t.year, -1);
+  return { day: 1, month: back.month, year: back.year };
 }
 
-function setupJpgExport() {
-  document.getElementById('download-jpg-btn').addEventListener('click', exportReportAsJpg);
+let periodFrom = defaultPeriodFrom();
+let periodTo = todayDate();
+
+function updatePeriodFieldLabels() {
+  document.getElementById('period-from-btn').textContent = formatFullDateUk(periodFrom.day, periodFrom.month, periodFrom.year);
+  document.getElementById('period-to-btn').textContent = formatFullDateUk(periodTo.day, periodTo.month, periodTo.year);
+}
+
+function dateValue(d) {
+  return d.year * 10000 + d.month * 100 + d.day;
+}
+
+function renderPeriodReport() {
+  updatePeriodFieldLabels();
+
+  if (dateValue(periodFrom) > dateValue(periodTo)) {
+    periodTo = periodFrom;
+    updatePeriodFieldLabels();
+  }
+
+  const from = dateValue(periodFrom);
+  const to = dateValue(periodTo);
+  const matches = entries
+    .filter((e) => { const v = dateValue(e); return v >= from && v <= to; })
+    .sort((a, b) => dateValue(b) - dateValue(a));
+
+  const content = document.getElementById('report-content');
+  const total = matches.reduce((sum, e) => sum + e.amount, 0);
+
+  if (matches.length === 0) {
+    content.innerHTML = `<p class="report-grand-total">Всього: <span>${formatAmount(total)}</span></p><p class="report-line">Немає витрат за цей період.</p>`;
+    return;
+  }
+
+  const rows = matches.map((e) => `
+    <div class="period-row">
+      <span>${e.day} ${MONTH_NAMES_UK[e.month - 1]} ${e.year}</span>
+      <span>${escapeHtml(e.folder)}</span>
+      <span>${escapeHtml(e.store)}</span>
+      <span>${formatAmount(e.amount)}</span>
+    </div>
+  `).join('');
+
+  content.innerHTML = `
+    <p class="report-grand-total">Всього: <span>${formatAmount(total)}</span></p>
+    <div class="period-table">
+      <div class="period-row period-header">
+        <span>Дата</span><span>Папка</span><span>Магазин</span><span>Сума</span>
+      </div>
+      ${rows}
+    </div>
+  `;
+}
+
+function setupPrint() {
+  document.getElementById('print-btn').addEventListener('click', () => window.print());
 }
 
 function runSetup(name, fn) {
@@ -814,6 +828,6 @@ document.addEventListener('DOMContentLoaded', () => {
   runSetup('setupAddForm', setupAddForm);
   runSetup('setupSortToggle', setupSortToggle);
   runSetup('setupReports', setupReports);
-  runSetup('setupJpgExport', setupJpgExport);
+  runSetup('setupPrint', setupPrint);
   runSetup('render', render);
 });
