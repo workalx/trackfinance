@@ -431,9 +431,97 @@ function setupReports() {
   });
 }
 
+function exportReportAsJpg() {
+  const { month, year } = reportCursor;
+  const monthEntries = computeMonthEntries(month, year);
+  const breakdown = computeBreakdown(monthEntries);
+  const total = monthEntries.reduce((sum, e) => sum + e.amount, 0);
+  const { avg, maxDay, maxAmount } = computeDayStats(monthEntries);
+
+  const width = 720;
+  const padding = 28;
+  const lineHeight = 30;
+  const breakdownLines = Math.max(breakdown.length, 1);
+  const entryLines = Math.max(monthEntries.length, 1);
+  const totalLines = 2 /* title + spacing */ + 2 /* total + spacing */ + 1 /* breakdown header */ + breakdownLines + 1 /* spacing */ + 2 /* avg + max */ + 1 /* spacing */ + 1 /* entries header */ + entryLines;
+  const height = padding * 2 + totalLines * lineHeight;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, width, height);
+  ctx.fillStyle = '#0f172a';
+  ctx.textBaseline = 'alphabetic';
+
+  let y = padding + 22;
+  ctx.font = 'bold 24px system-ui, sans-serif';
+  ctx.fillText(`Мої витрати — ${MONTH_NAMES_UK[month - 1]} ${year}`, padding, y);
+  y += lineHeight * 2;
+
+  ctx.font = '20px system-ui, sans-serif';
+  ctx.fillText(`Всього: ${formatAmount(total)}`, padding, y);
+  y += lineHeight * 2;
+
+  ctx.font = 'bold 18px system-ui, sans-serif';
+  ctx.fillText('По магазинах:', padding, y);
+  y += lineHeight;
+  ctx.font = '18px system-ui, sans-serif';
+  if (breakdown.length === 0) {
+    ctx.fillText('немає витрат', padding + 16, y);
+    y += lineHeight;
+  } else {
+    breakdown.forEach((b) => {
+      ctx.fillText(`${b.store}: ${formatAmount(b.amount)}`, padding + 16, y);
+      y += lineHeight;
+    });
+  }
+  y += lineHeight;
+
+  ctx.font = '18px system-ui, sans-serif';
+  ctx.fillText(`Середня витрата за день: ${formatAmount(avg)}`, padding, y);
+  y += lineHeight;
+  ctx.fillText(
+    maxDay ? `Максимальна витрата за день: ${formatAmount(maxAmount)} (${maxDay} ${MONTH_NAMES_UK[month - 1]})` : 'Максимальна витрата за день: -',
+    padding, y
+  );
+  y += lineHeight * 2;
+
+  ctx.font = 'bold 18px system-ui, sans-serif';
+  ctx.fillText('Записи:', padding, y);
+  y += lineHeight;
+  ctx.font = '18px system-ui, sans-serif';
+  if (monthEntries.length === 0) {
+    ctx.fillText('немає витрат', padding + 16, y);
+  } else {
+    monthEntries.forEach((e) => {
+      ctx.fillText(`${e.day} ${MONTH_NAMES_UK[month - 1]} — ${e.store} — ${formatAmount(e.amount)}`, padding + 16, y);
+      y += lineHeight;
+    });
+  }
+
+  canvas.toBlob((blob) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `vytraty-${year}-${String(month).padStart(2, '0')}.jpg`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }, 'image/jpeg', 0.92);
+}
+
+function setupJpgExport() {
+  document.getElementById('download-jpg-btn').addEventListener('click', exportReportAsJpg);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   setupTabs();
   setupAddForm();
   setupReports();
+  setupJpgExport();
   render();
 });
