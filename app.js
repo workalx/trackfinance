@@ -386,6 +386,51 @@ function setupFolderTabs() {
   renderFolderTabs();
 }
 
+function renderManageStores() {
+  document.getElementById('manage-stores-title').textContent = `Магазини — ${selectedFolder}`;
+  const list = document.getElementById('manage-stores-list');
+  const empty = document.getElementById('manage-stores-empty');
+  list.innerHTML = '';
+
+  const stores = storesForFolder(selectedFolder);
+  if (stores.length === 0) {
+    empty.hidden = false;
+    return;
+  }
+  empty.hidden = true;
+
+  stores.forEach((name) => {
+    const row = document.createElement('div');
+    row.className = 'manage-store-row';
+    row.innerHTML = `
+      <span>${escapeHtml(name)}</span>
+      <button type="button" aria-label="Видалити магазин">🗑</button>
+    `;
+    row.querySelector('button').addEventListener('click', () => {
+      removeStoreFromFolder(selectedFolder, name);
+      renderManageStores();
+      refreshAllStoreSelects();
+    });
+    list.appendChild(row);
+  });
+}
+
+function openManageStores() {
+  document.getElementById('add-screen').hidden = true;
+  document.getElementById('manage-stores-screen').hidden = false;
+  renderManageStores();
+}
+
+function closeManageStores() {
+  document.getElementById('manage-stores-screen').hidden = true;
+  document.getElementById('add-screen').hidden = false;
+}
+
+function setupManageStores() {
+  document.getElementById('manage-stores-btn').addEventListener('click', openManageStores);
+  document.getElementById('manage-stores-back').addEventListener('click', closeManageStores);
+}
+
 function createRow() {
   const row = document.createElement('div');
   row.className = 'add-row';
@@ -765,6 +810,7 @@ document.addEventListener('DOMContentLoaded', () => {
   runSetup('setupTabs', setupTabs);
   runSetup('setupCalendar', setupCalendar);
   runSetup('setupFolderTabs', setupFolderTabs);
+  runSetup('setupManageStores', setupManageStores);
   runSetup('setupAddForm', setupAddForm);
   runSetup('setupSortToggle', setupSortToggle);
   runSetup('setupReports', setupReports);
