@@ -4,8 +4,11 @@
   --text: #0f172a;
   --text-muted: #64748b;
   --accent: #2563eb;
+  --accent-2: #7c3aed;
+  --gradient-accent: linear-gradient(135deg, var(--accent), var(--accent-2));
   --danger: #dc2626;
   --border: #e2e8f0;
+  --radius-lg: 1rem;
   color-scheme: light dark;
 }
 
@@ -16,6 +19,7 @@
     --text: #f1f5f9;
     --text-muted: #94a3b8;
     --accent: #60a5fa;
+    --accent-2: #a78bfa;
     --danger: #f87171;
     --border: #334155;
   }
@@ -91,7 +95,7 @@ main { max-width: 480px; margin: 0 auto; padding: 1rem; }
 }
 
 #add-row-btn { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
-#save-all-btn { background: var(--accent); color: #fff; }
+#save-all-btn { background: var(--gradient-accent); color: #fff; }
 #save-all-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* Entries list (shared by Add screen and Reports screen) */
@@ -103,7 +107,7 @@ main { max-width: 480px; margin: 0 auto; padding: 1rem; }
   padding: 0.85rem 1rem;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 0.75rem;
+  border-radius: var(--radius-lg);
   margin-bottom: 0.6rem;
 }
 
@@ -182,6 +186,8 @@ main { max-width: 480px; margin: 0 auto; padding: 1rem; }
   margin-bottom: 1rem;
 }
 .report-period-pickers .date-field { margin-bottom: 0; }
+.report-period-pickers[hidden] { display: none; }
+.report-nav[hidden] { display: none; }
 
 .report-grand-total {
   font-size: 1.3rem;
@@ -440,7 +446,7 @@ main { max-width: 480px; margin: 0 auto; padding: 1rem; }
   width: 100%;
   max-width: 480px;
   background: var(--surface);
-  border-radius: 1.25rem 1.25rem 0 0;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   padding: 0.75rem 1rem calc(1.25rem + env(safe-area-inset-bottom, 0px));
   transform: translateY(100%);
   transition: transform 250ms ease-out;
@@ -514,7 +520,7 @@ main { max-width: 480px; margin: 0 auto; padding: 1rem; }
 
 .cal-day:disabled { color: var(--text-muted); opacity: 0.35; cursor: not-allowed; }
 .cal-day.today { border: 1.5px solid var(--accent); }
-.cal-day.selected { background: var(--accent); color: #fff; font-weight: 700; }
+.cal-day.selected { background: var(--gradient-accent); color: #fff; font-weight: 700; }
 .cal-day.blank { visibility: hidden; cursor: default; }
 
 .calendar-close {
@@ -526,4 +532,31 @@ main { max-width: 480px; margin: 0 auto; padding: 1rem; }
   color: var(--text);
   font-size: 0.95rem;
   cursor: pointer;
+}
+
+/* Glass/gradient card treatment */
+.entry-row, .folder-report-card, .manage-store-row {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 96%, var(--accent) 4%), var(--surface));
+  border-color: var(--border);
+}
+
+/* Entrance and press-feedback animation */
+@media (prefers-reduced-motion: no-preference) {
+  .day-block, .folder-report-card, .period-row, .manage-store-row {
+    animation: fade-up 220ms ease-out both;
+  }
+
+  #add-row-btn:active, #save-all-btn:active, #print-btn:active,
+  .folder-tab:active, .cal-day:active, button:active {
+    transform: scale(0.97);
+  }
+
+  button, .folder-tab, .cal-day, .tab-btn, .report-mode-btn {
+    transition: transform 150ms ease-out, background-color 200ms ease-out, color 200ms ease-out;
+  }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
