@@ -7,7 +7,7 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0f172a">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=2">
+  <link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
   <header class="app-header">
@@ -16,6 +16,8 @@
 
   <main>
     <section id="add-screen">
+      <div id="folder-tabs" class="folder-tabs"></div>
+
       <p class="monthly-total-label">Всього за <span id="month-name"></span>: <span id="monthly-total">$0.00</span></p>
 
       <button type="button" id="date-field-btn" class="date-field">
@@ -30,12 +32,23 @@
         <button type="button" id="save-all-btn" disabled>Зберегти все</button>
       </div>
 
+      <button type="button" id="manage-stores-btn" class="link-btn">Керувати магазинами</button>
+
       <div class="list-header">
         <h2>Мої витрати</h2>
         <button type="button" id="sort-toggle-btn">За датою</button>
       </div>
       <section id="entries-list" aria-live="polite"></section>
       <p id="empty-state" hidden>Поки немає витрат.</p>
+    </section>
+
+    <section id="manage-stores-screen" hidden>
+      <div class="screen-header">
+        <button type="button" id="manage-stores-back" aria-label="Назад">‹</button>
+        <h2 id="manage-stores-title">Магазини</h2>
+      </div>
+      <div id="manage-stores-list"></div>
+      <p id="manage-stores-empty" hidden>Немає магазинів у цій папці.</p>
     </section>
 
     <div id="calendar-backdrop" class="calendar-backdrop" hidden>
@@ -55,31 +68,26 @@
     </div>
 
     <section id="reports-screen" hidden>
-      <div class="report-nav">
-        <button type="button" id="report-prev" aria-label="Попередній місяць">‹</button>
-        <span id="report-month-label"></span>
-        <button type="button" id="report-next" aria-label="Наступний місяць">›</button>
+      <div class="report-mode-switch">
+        <button type="button" class="report-mode-btn selected" data-mode="month">Місяць</button>
+        <button type="button" class="report-mode-btn" data-mode="year">Рік</button>
+        <button type="button" class="report-mode-btn" data-mode="period">Період</button>
       </div>
 
-      <p class="report-total">Всього: <span id="report-total">$0.00</span></p>
-
-      <div class="report-block">
-        <h2>По магазинах</h2>
-        <div id="report-breakdown"></div>
+      <div id="report-nav" class="report-nav">
+        <button type="button" id="report-prev" aria-label="Попередній період">‹</button>
+        <span id="report-period-label"></span>
+        <button type="button" id="report-next" aria-label="Наступний період">›</button>
       </div>
 
-      <div class="report-block">
-        <p id="report-avg"></p>
-        <p id="report-max"></p>
+      <div id="report-period-pickers" class="report-period-pickers" hidden>
+        <button type="button" id="period-from-btn" class="date-field"></button>
+        <button type="button" id="period-to-btn" class="date-field"></button>
       </div>
 
-      <button type="button" id="download-jpg-btn">Скачати .jpg</button>
+      <button type="button" id="print-btn">Друкувати</button>
 
-      <div class="report-block">
-        <h2>Записи</h2>
-        <section id="report-entries-list"></section>
-        <p id="report-empty-state" hidden>Немає витрат за цей місяць.</p>
-      </div>
+      <div id="report-content"></div>
     </section>
   </main>
 
@@ -88,7 +96,7 @@
     <button type="button" id="tab-reports" class="tab-btn">Звіти</button>
   </nav>
 
-  <script src="app.js?v=1"></script>
+  <script src="app.js?v=2"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));

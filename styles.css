@@ -199,6 +199,51 @@ main { max-width: 480px; margin: 0 auto; padding: 1rem; }
 
 .tab-btn.selected { color: var(--accent); }
 
+/* Folder tabs */
+.folder-tabs {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+.folder-tab {
+  flex: 0 0 auto;
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.folder-tab.selected {
+  background: var(--gradient-accent);
+  color: #fff;
+  border-color: transparent;
+}
+
+.folder-tab.add-folder {
+  border-style: dashed;
+}
+
+.link-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 0.9rem;
+  padding: 0.5rem 0;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+}
+
 /* Date field */
 .date-field {
   width: 100%;

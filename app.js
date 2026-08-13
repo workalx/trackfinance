@@ -4,7 +4,8 @@ const CUSTOM_STORES_KEY = 'expenseTracker.customStores';
 function loadEntries() {
   try {
     const raw = localStorage.getItem(ENTRIES_KEY);
-    return raw ? JSON.parse(raw) : [];
+    const parsed = raw ? JSON.parse(raw) : [];
+    return parsed.map((e) => ({ folder: 'Інше', ...e }));
   } catch {
     return [];
   }
@@ -18,21 +19,76 @@ function saveEntries(entries) {
   }
 }
 
-function loadCustomStores() {
+const CUSTOM_FOLDERS_KEY = 'expenseTracker.customFolders';
+const STORES_BY_FOLDER_KEY = 'expenseTracker.storesByFolder';
+const FIXED_FOLDERS = ['Продукти', "Обов'язкові платежі", 'Інше'];
+
+function loadCustomFolders() {
   try {
-    const raw = localStorage.getItem(CUSTOM_STORES_KEY);
+    const raw = localStorage.getItem(CUSTOM_FOLDERS_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
   }
 }
 
-function saveCustomStores(stores) {
+function saveCustomFolders(list) {
   try {
-    localStorage.setItem(CUSTOM_STORES_KEY, JSON.stringify(stores));
+    localStorage.setItem(CUSTOM_FOLDERS_KEY, JSON.stringify(list));
   } catch {
     // localStorage unavailable - continue without persistence
   }
+}
+
+function allFolders() {
+  return [...FIXED_FOLDERS, ...loadCustomFolders()];
+}
+
+function loadStoresByFolder() {
+  try {
+    const raw = localStorage.getItem(STORES_BY_FOLDER_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveStoresByFolder(map) {
+  try {
+    localStorage.setItem(STORES_BY_FOLDER_KEY, JSON.stringify(map));
+  } catch {
+    // localStorage unavailable - continue without persistence
+  }
+}
+
+function storesForFolder(folder) {
+  const map = loadStoresByFolder();
+  const custom = map[folder] || [];
+  const defaults = folder === 'Продукти' ? ['Walmart', 'Dollarama', 'Freshco', 'Costco'] : [];
+  const removed = map[folder + ':removed'] || [];
+  return [...defaults.filter((d) => !removed.includes(d)), ...custom];
+}
+
+function removeStoreFromFolder(folder, store) {
+  const map = loadStoresByFolder();
+  if (map[folder]) {
+    map[folder] = map[folder].filter((s) => s !== store);
+  }
+  const defaults = folder === 'Продукти' ? ['Walmart', 'Dollarama', 'Freshco', 'Costco'] : [];
+  if (defaults.includes(store)) {
+    const removedKey = folder + ':removed';
+    map[removedKey] = [...new Set([...(map[removedKey] || []), store])];
+  }
+  saveStoresByFolder(map);
+}
+
+function addStoreToFolder(folder, store) {
+  const map = loadStoresByFolder();
+  map[folder] = map[folder] || [];
+  if (!map[folder].includes(store)) {
+    map[folder].push(store);
+  }
+  saveStoresByFolder(map);
 }
 
 function makeId() {
@@ -45,6 +101,7 @@ function getCurrentMonthYear() {
 }
 
 const entries = loadEntries();
+let selectedFolder = allFolders()[0];
 
 const MONTH_NAMES_UK = ['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
 
@@ -72,11 +129,13 @@ function render() {
   const { month, year } = getCurrentMonthYear();
   document.getElementById('month-name').textContent = MONTH_NAMES_UK[month - 1];
 
-  const monthEntries = entries.filter((e) => e.month === month && e.year === year);
+  const folderEntries = entries.filter((e) => e.folder === selectedFolder);
+
+  const monthEntries = folderEntries.filter((e) => e.month === month && e.year === year);
   const total = monthEntries.reduce((sum, e) => sum + e.amount, 0);
   document.getElementById('monthly-total').textContent = formatAmount(total);
 
-  const blocks = groupEntriesByDay(entries);
+  const blocks = groupEntriesByDay(folderEntries);
   blocks.sort((a, b) => {
     if (listSortMode === 'order') return b.maxIndex - a.maxIndex;
     if (a.year !== b.year) return b.year - a.year;
@@ -145,7 +204,6 @@ function daysInMonth(month, year) {
   return new Date(year, month, 0).getDate();
 }
 
-const FIXED_STORES = ['Walmart', 'Dollarama', 'Freshco', 'Costco'];
 const STORE_OPTION_SENTINEL = '__add_custom__';
 const MONTHS_BACK_LIMIT = 20;
 
@@ -267,7 +325,7 @@ function populateStoreOptions(selectEl) {
   blank.textContent = 'Магазин';
   selectEl.appendChild(blank);
 
-  [...FIXED_STORES, ...loadCustomStores()].forEach((name) => {
+  storesForFolder(selectedFolder).forEach((name) => {
     const opt = document.createElement('option');
     opt.value = name;
     opt.textContent = name;
@@ -286,6 +344,46 @@ function populateStoreOptions(selectEl) {
 
 function refreshAllStoreSelects() {
   document.querySelectorAll('.row-store').forEach(populateStoreOptions);
+}
+
+function renderFolderTabs() {
+  const container = document.getElementById('folder-tabs');
+  container.innerHTML = '';
+
+  allFolders().forEach((name) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'folder-tab' + (name === selectedFolder ? ' selected' : '');
+    btn.textContent = name;
+    btn.addEventListener('click', () => switchFolder(name));
+    container.appendChild(btn);
+  });
+
+  const addBtn = document.createElement('button');
+  addBtn.type = 'button';
+  addBtn.className = 'folder-tab add-folder';
+  addBtn.textContent = '+';
+  addBtn.addEventListener('click', () => {
+    const name = prompt('Назва папки:');
+    const trimmed = (name || '').trim();
+    if (!trimmed || allFolders().includes(trimmed)) return;
+    const custom = loadCustomFolders();
+    custom.push(trimmed);
+    saveCustomFolders(custom);
+    switchFolder(trimmed);
+  });
+  container.appendChild(addBtn);
+}
+
+function switchFolder(name) {
+  selectedFolder = name;
+  renderFolderTabs();
+  refreshAllStoreSelects();
+  render();
+}
+
+function setupFolderTabs() {
+  renderFolderTabs();
 }
 
 function createRow() {
@@ -311,11 +409,7 @@ function createRow() {
       updateSaveAllButtonState();
       return;
     }
-    const customStores = loadCustomStores();
-    if (!customStores.includes(trimmed)) {
-      customStores.push(trimmed);
-      saveCustomStores(customStores);
-    }
+    addStoreToFolder(selectedFolder, trimmed);
     refreshAllStoreSelects();
     e.target.value = trimmed;
     updateSaveAllButtonState();
@@ -373,7 +467,7 @@ function setupAddForm() {
     if (states.some((s) => !s.empty && !s.valid) || !states.some((s) => s.valid)) return;
 
     states.filter((s) => s.valid).forEach((s) => {
-      entries.push({ id: makeId(), day: selectedDate.day, month: selectedDate.month, year: selectedDate.year, store: s.store, amount: s.amount });
+      entries.push({ id: makeId(), day: selectedDate.day, month: selectedDate.month, year: selectedDate.year, store: s.store, amount: s.amount, folder: selectedFolder });
     });
     saveEntries(entries);
 
@@ -440,13 +534,9 @@ function editEntry(id) {
   entry.store = newStore.trim();
   entry.amount = newAmount;
 
-  if (!['Walmart', 'Dollarama', 'Freshco', 'Costco'].includes(entry.store)) {
-    const customStores = loadCustomStores();
-    if (!customStores.includes(entry.store)) {
-      customStores.push(entry.store);
-      saveCustomStores(customStores);
-      refreshAllStoreSelects();
-    }
+  if (!storesForFolder(entry.folder).includes(entry.store)) {
+    addStoreToFolder(entry.folder, entry.store);
+    refreshAllStoreSelects();
   }
 
   saveEntries(entries);
@@ -674,6 +764,7 @@ function runSetup(name, fn) {
 document.addEventListener('DOMContentLoaded', () => {
   runSetup('setupTabs', setupTabs);
   runSetup('setupCalendar', setupCalendar);
+  runSetup('setupFolderTabs', setupFolderTabs);
   runSetup('setupAddForm', setupAddForm);
   runSetup('setupSortToggle', setupSortToggle);
   runSetup('setupReports', setupReports);
