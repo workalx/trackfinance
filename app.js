@@ -320,8 +320,120 @@ document.getElementById('entries-list').addEventListener('click', (e) => {
   }
 });
 
+let reportCursor = getCurrentMonthYear();
+
+function computeMonthEntries(month, year) {
+  return entries
+    .filter((e) => e.month === month && e.year === year)
+    .sort((a, b) => a.day - b.day);
+}
+
+function computeBreakdown(monthEntries) {
+  const totals = new Map();
+  monthEntries.forEach((e) => {
+    totals.set(e.store, (totals.get(e.store) || 0) + e.amount);
+  });
+  return [...totals.entries()]
+    .map(([store, amount]) => ({ store, amount }))
+    .sort((a, b) => b.amount - a.amount);
+}
+
+function computeDayStats(monthEntries) {
+  if (monthEntries.length === 0) {
+    return { avg: 0, maxDay: null, maxAmount: 0 };
+  }
+  const byDay = new Map();
+  monthEntries.forEach((e) => {
+    byDay.set(e.day, (byDay.get(e.day) || 0) + e.amount);
+  });
+  const total = [...byDay.values()].reduce((sum, v) => sum + v, 0);
+  const avg = total / byDay.size;
+
+  let maxDay = null;
+  let maxAmount = -Infinity;
+  byDay.forEach((amount, day) => {
+    if (amount > maxAmount) {
+      maxAmount = amount;
+      maxDay = day;
+    }
+  });
+
+  return { avg, maxDay, maxAmount };
+}
+
+function hasEntriesBefore(month, year) {
+  return entries.some((e) => e.year < year || (e.year === year && e.month < month));
+}
+
+function renderReports() {
+  const { month, year } = reportCursor;
+  document.getElementById('report-month-label').textContent = `${MONTH_NAMES_UK[month - 1]} ${year}`;
+
+  const { month: curMonth, year: curYear } = getCurrentMonthYear();
+  const isCurrentMonth = month === curMonth && year === curYear;
+  document.getElementById('report-next').disabled = isCurrentMonth;
+  document.getElementById('report-prev').disabled = !hasEntriesBefore(month, year);
+
+  const monthEntries = computeMonthEntries(month, year);
+  const total = monthEntries.reduce((sum, e) => sum + e.amount, 0);
+  document.getElementById('report-total').textContent = formatAmount(total);
+
+  const breakdown = computeBreakdown(monthEntries);
+  const breakdownEl = document.getElementById('report-breakdown');
+  breakdownEl.innerHTML = breakdown.length === 0
+    ? '<p class="report-line">Немає даних</p>'
+    : breakdown.map((b) => `<div class="report-line"><span>${escapeHtml(b.store)}</span><span>${formatAmount(b.amount)}</span></div>`).join('');
+
+  const { avg, maxDay, maxAmount } = computeDayStats(monthEntries);
+  document.getElementById('report-avg').textContent = `Середня витрата за день: ${formatAmount(avg)}`;
+  document.getElementById('report-max').textContent = maxDay
+    ? `Максимальна витрата за день: ${formatAmount(maxAmount)} (${maxDay} ${MONTH_NAMES_UK[month - 1]})`
+    : 'Максимальна витрата за день: -';
+
+  const listEl = document.getElementById('report-entries-list');
+  const emptyEl = document.getElementById('report-empty-state');
+  listEl.innerHTML = '';
+  if (monthEntries.length === 0) {
+    emptyEl.hidden = false;
+  } else {
+    emptyEl.hidden = true;
+    monthEntries.forEach((entry) => {
+      const row = document.createElement('div');
+      row.className = 'entry-row';
+      row.innerHTML = `
+        <div class="entry-main">
+          <span class="entry-store">${escapeHtml(entry.store)}</span>
+          <span class="entry-day">${entry.day} ${MONTH_NAMES_UK[entry.month - 1]}</span>
+        </div>
+        <span class="entry-amount">${formatAmount(entry.amount)}</span>
+      `;
+      listEl.appendChild(row);
+    });
+  }
+}
+
+function stepReportMonth(delta) {
+  let { month, year } = reportCursor;
+  month += delta;
+  if (month < 1) { month = 12; year -= 1; }
+  if (month > 12) { month = 1; year += 1; }
+  reportCursor = { month, year };
+  renderReports();
+}
+
+function setupReports() {
+  document.getElementById('report-prev').addEventListener('click', () => stepReportMonth(-1));
+  document.getElementById('report-next').addEventListener('click', () => stepReportMonth(1));
+
+  document.getElementById('tab-reports').addEventListener('click', () => {
+    reportCursor = getCurrentMonthYear();
+    renderReports();
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   setupTabs();
   setupAddForm();
+  setupReports();
   render();
 });
