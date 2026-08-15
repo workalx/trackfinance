@@ -2,6 +2,10 @@ import { auth } from './firebase-config.js';
 import {
   onAuthStateChanged, signInWithPopup, signOut, GoogleAuthProvider,
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+import { db } from './firebase-config.js';
+import {
+  collection, doc, query, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, serverTimestamp,
+} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
 let currentUser = null;
 
@@ -22,11 +26,17 @@ function showApp() {
 }
 
 function startDataSubscriptions() {
-  // Filled in by Task 2 (entries) and Task 3 (profile/folders/stores).
+  const entriesQuery = query(collection(db, 'users', currentUser.uid, 'entries'), orderBy('createdAt'));
+  entriesUnsub = onSnapshot(entriesQuery, (snapshot) => {
+    entries = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+    render();
+    if (!document.getElementById('reports-screen').hidden) renderReports();
+  });
 }
 
 function stopDataSubscriptions() {
-  // Filled in by Task 2 (entries) and Task 3 (profile/folders/stores).
+  if (entriesUnsub) { entriesUnsub(); entriesUnsub = null; }
+  entries = [];
 }
 
 function setupAuth() {
@@ -56,26 +66,7 @@ function setupAuth() {
   });
 }
 
-const ENTRIES_KEY = 'expenseTracker.entries';
 const CUSTOM_STORES_KEY = 'expenseTracker.customStores';
-
-function loadEntries() {
-  try {
-    const raw = localStorage.getItem(ENTRIES_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return parsed.map((e) => ({ folder: 'Інше', ...e }));
-  } catch {
-    return [];
-  }
-}
-
-function saveEntries(entries) {
-  try {
-    localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries));
-  } catch {
-    // localStorage unavailable (e.g. private mode) - continue without persistence
-  }
-}
 
 const CUSTOM_FOLDERS_KEY = 'expenseTracker.customFolders';
 const STORES_BY_FOLDER_KEY = 'expenseTracker.storesByFolder';
@@ -149,16 +140,13 @@ function addStoreToFolder(folder, store) {
   saveStoresByFolder(map);
 }
 
-function makeId() {
-  return (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
-}
-
 function getCurrentMonthYear() {
   const now = new Date();
   return { month: now.getMonth() + 1, year: now.getFullYear() };
 }
 
-const entries = loadEntries();
+let entries = [];
+let entriesUnsub = null;
 let selectedFolder = allFolders()[0];
 
 const MONTH_NAMES_UK = ['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
@@ -590,16 +578,18 @@ function setupAddForm() {
     if (states.some((s) => !s.empty && !s.valid) || !states.some((s) => s.valid)) return;
 
     states.filter((s) => s.valid).forEach((s) => {
-      entries.push({ id: makeId(), day: selectedDate.day, month: selectedDate.month, year: selectedDate.year, store: s.store, amount: s.amount, folder: selectedFolder });
+      addDoc(collection(db, 'users', currentUser.uid, 'entries'), {
+        day: selectedDate.day, month: selectedDate.month, year: selectedDate.year,
+        store: s.store, amount: s.amount, folder: selectedFolder,
+        createdAt: serverTimestamp(),
+      }).catch((err) => console.error('[entries] add failed:', err));
     });
-    saveEntries(entries);
 
     rowsContainer.innerHTML = '';
     rowsContainer.appendChild(createRow());
     updateSaveAllButtonState();
     selectedDate = todayDate();
     updateDateFieldLabel();
-    render();
   });
 }
 
@@ -617,11 +607,7 @@ function setupTabs() {
 }
 
 function deleteEntry(id) {
-  const idx = entries.findIndex((e) => e.id === id);
-  if (idx === -1) return;
-  entries.splice(idx, 1);
-  saveEntries(entries);
-  render();
+  deleteDoc(doc(db, 'users', currentUser.uid, 'entries', id)).catch((err) => console.error('[entries] delete failed:', err));
 }
 
 function editEntry(id) {
@@ -653,17 +639,15 @@ function editEntry(id) {
     return;
   }
 
-  entry.day = newDay;
-  entry.store = newStore.trim();
-  entry.amount = newAmount;
-
-  if (!storesForFolder(entry.folder).includes(entry.store)) {
-    addStoreToFolder(entry.folder, entry.store);
+  const updatedStore = newStore.trim();
+  if (!storesForFolder(entry.folder).includes(updatedStore)) {
+    addStoreToFolder(entry.folder, updatedStore);
     refreshAllStoreSelects();
   }
 
-  saveEntries(entries);
-  render();
+  updateDoc(doc(db, 'users', currentUser.uid, 'entries', id), {
+    day: newDay, store: updatedStore, amount: newAmount,
+  }).catch((err) => console.error('[entries] update failed:', err));
 }
 
 document.getElementById('entries-list').addEventListener('click', (e) => {
