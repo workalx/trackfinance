@@ -31,7 +31,7 @@ function startDataSubscriptions() {
     entries = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
     render();
     if (!document.getElementById('reports-screen').hidden) renderReports();
-  });
+  }, (err) => console.error('[entries] subscription failed:', err));
 
   const profileRef = doc(db, 'users', currentUser.uid);
   profileUnsub = onSnapshot(profileRef, (snap) => {
@@ -39,7 +39,7 @@ function startDataSubscriptions() {
       setDoc(profileRef, {
         customFolders: [], storesByFolder: {}, removedDefaultStores: {},
         language: 'en', theme: 'light',
-      }).catch((err) => console.error('[profile] init failed:', err));
+      }, { merge: true }).catch((err) => console.error('[profile] init failed:', err));
       return;
     }
     const data = snap.data();
@@ -54,7 +54,8 @@ function startDataSubscriptions() {
     renderFolderTabs();
     refreshAllStoreSelects();
     render();
-  });
+    if (!document.getElementById('manage-stores-screen').hidden) renderManageStores();
+  }, (err) => console.error('[profile] subscription failed:', err));
 }
 
 function stopDataSubscriptions() {
@@ -63,6 +64,11 @@ function stopDataSubscriptions() {
   entries = [];
   profileData = { customFolders: [], storesByFolder: {}, removedDefaultStores: {}, language: 'en', theme: 'light' };
   selectedFolder = FIXED_FOLDERS[0];
+  render();
+  renderFolderTabs();
+  refreshAllStoreSelects();
+  if (!document.getElementById('manage-stores-screen').hidden) closeManageStores();
+  if (!document.getElementById('reports-screen').hidden) switchTab('add');
 }
 
 function setupAuth() {
@@ -127,6 +133,7 @@ function removeStoreFromFolder(folder, store) {
     removedDefaultStores[folder] = [...new Set([...(removedDefaultStores[folder] || []), store])];
     updates.removedDefaultStores = removedDefaultStores;
   }
+  profileData = { ...profileData, ...updates };
   saveProfileFields(updates);
 }
 
@@ -136,6 +143,7 @@ function addStoreToFolder(folder, store) {
   if (!storesByFolder[folder].includes(store)) {
     storesByFolder[folder].push(store);
   }
+  profileData = { ...profileData, storesByFolder };
   saveProfileFields({ storesByFolder });
 }
 
@@ -432,7 +440,9 @@ function renderFolderTabs() {
     const name = prompt('Назва папки:');
     const trimmed = (name || '').trim();
     if (!trimmed || allFolders().includes(trimmed)) return;
-    saveProfileFields({ customFolders: [...profileData.customFolders, trimmed] });
+    const customFolders = [...profileData.customFolders, trimmed];
+    profileData = { ...profileData, customFolders };
+    saveProfileFields({ customFolders });
     switchFolder(trimmed);
   });
   container.appendChild(addBtn);

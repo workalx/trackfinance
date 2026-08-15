@@ -125,9 +125,19 @@ service cloud.firestore {
 - Sign-in popup blocked or dismissed: catch the rejected promise from
   `signInWithPopup`, show an inline error line on the login screen with
   a retry affordance.
-- Offline writes: Firestore's built-in offline queue handles this —
-  `onSnapshot` reflects pending local writes immediately, syncs when back
-  online. No custom retry/error logic needed for the common case.
+- Offline writes: Firestore's built-in write queue and local cache handle
+  this — `onSnapshot` reflects pending local writes immediately, syncs when
+  back online. No custom retry/error logic needed for the common case. This
+  requires persistence to be enabled (`initializeFirestore` with
+  `persistentLocalCache()` in `firebase-config.js`), which also lets
+  previously-loaded data survive a reload while offline instead of showing
+  empty. Note the app's overall offline story is still incomplete: the
+  Firebase SDK modules themselves are loaded fresh from the `gstatic.com`
+  CDN on every page load and are not cached by the service worker, so the
+  app cannot even boot without a network connection on first load in a
+  session. Full offline support (vendoring the SDK, or adding service-worker
+  runtime caching for the `gstatic.com` origin) is a known, explicitly
+  out-of-scope gap.
 - Unexpected Firestore errors (permission-denied, etc.): log to console;
   not expected in normal operation since rules are uid-scoped and the app
   never constructs paths outside `users/{uid}/...`.
