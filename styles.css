@@ -43,7 +43,7 @@ body {
 
 .app-header h1 { margin: 0; font-size: 1.25rem; }
 
-main { max-width: 480px; margin: 0 auto; padding: 1rem; }
+main { padding: 1rem; }
 
 .monthly-total-label, .report-total { margin: 0 0 1rem; color: var(--text-muted); font-size: 1rem; }
 #monthly-total, #report-total { color: var(--accent); font-weight: 700; font-size: 1.1rem; }
@@ -190,33 +190,79 @@ main { max-width: 480px; margin: 0 auto; padding: 1rem; }
 .report-nav[hidden] { display: none; }
 
 .report-grand-total {
-  font-size: 1.3rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.15rem;
   font-weight: 700;
-  margin: 0 0 1.25rem;
+  margin: 0 0 1rem;
+  padding: 1.1rem 1.25rem;
+  border-radius: var(--radius-lg, 0.75rem);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 16%, var(--surface)), var(--surface));
+  border: 1px solid var(--border);
 }
-.report-grand-total span { color: var(--accent); }
+.report-grand-total span { color: var(--accent); font-size: 1.3rem; }
+
+.folder-totals-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.folder-total-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 0.75rem);
+  padding: 0.85rem 0.5rem;
+}
+
+.folder-total-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.folder-total-amount {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.folder-breakdowns-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
 
 .folder-report-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg, 0.75rem);
-  padding: 1rem;
-  margin-bottom: 1rem;
+  padding: 0.75rem 0.6rem;
 }
 
 .folder-report-header {
-  display: flex;
-  justify-content: space-between;
+  text-align: center;
   font-weight: 700;
-  font-size: 1.05rem;
-  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
 }
 
 .report-line {
   display: flex;
   justify-content: space-between;
-  padding: 0.5rem 0;
+  gap: 0.4rem;
+  padding: 0.4rem 0;
   border-bottom: 1px solid var(--border);
+  font-size: 0.82rem;
 }
 
 .period-table { margin-top: 0.5rem; }
@@ -257,7 +303,7 @@ main { max-width: 480px; margin: 0 auto; padding: 1rem; }
   }
   body { background: #ffffff; color: #0f172a; padding-bottom: 0; }
   #reports-screen, #report-content { display: block !important; }
-  .folder-report-card, .period-row { break-inside: avoid; }
+  .folder-report-card, .folder-total-card, .period-row { break-inside: avoid; }
 }
 
 /* Tab bar */
@@ -535,14 +581,14 @@ main { max-width: 480px; margin: 0 auto; padding: 1rem; }
 }
 
 /* Glass/gradient card treatment */
-.entry-row, .folder-report-card, .manage-store-row {
+.entry-row, .folder-report-card, .folder-total-card, .manage-store-row {
   background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 96%, var(--accent) 4%), var(--surface));
   border-color: var(--border);
 }
 
 /* Entrance and press-feedback animation */
 @media (prefers-reduced-motion: no-preference) {
-  .day-block, .folder-report-card, .period-row, .manage-store-row {
+  .day-block, .folder-report-card, .folder-total-card, .period-row, .manage-store-row {
     animation: fade-up 220ms ease-out both;
   }
 

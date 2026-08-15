@@ -651,28 +651,44 @@ function computeYearEntries(year) {
 }
 
 function renderFolderBreakdownBlock(container, listForTotals) {
-  allFolders().forEach((folder) => {
+  const folders = allFolders();
+
+  const totalsRow = document.createElement('div');
+  totalsRow.className = 'folder-totals-row';
+  totalsRow.style.gridTemplateColumns = `repeat(${folders.length}, 1fr)`;
+
+  const breakdownsRow = document.createElement('div');
+  breakdownsRow.className = 'folder-breakdowns-row';
+  breakdownsRow.style.gridTemplateColumns = `repeat(${folders.length}, 1fr)`;
+
+  folders.forEach((folder) => {
     const folderEntries = computeFolderEntries(listForTotals, folder);
     const folderTotal = folderEntries.reduce((sum, e) => sum + e.amount, 0);
 
+    const totalCard = document.createElement('div');
+    totalCard.className = 'folder-total-card';
+    totalCard.innerHTML = `
+      <span class="folder-total-name">${escapeHtml(folder)}</span>
+      <span class="folder-total-amount">${formatAmount(folderTotal)}</span>
+    `;
+    totalsRow.appendChild(totalCard);
+
+    const breakdown = computeBreakdown(folderEntries);
     const card = document.createElement('div');
     card.className = 'folder-report-card';
     card.innerHTML = `
-      <div class="folder-report-header">
-        <span>${escapeHtml(folder)}</span>
-        <span>${formatAmount(folderTotal)}</span>
-      </div>
-      <div class="folder-report-breakdown"></div>
+      <div class="folder-report-header">${escapeHtml(folder)}</div>
+      <div class="folder-report-breakdown">${
+        breakdown.length === 0
+          ? '<p class="report-line">Немає даних</p>'
+          : breakdown.map((b) => `<div class="report-line"><span>${escapeHtml(b.store)}</span><span>${formatAmount(b.amount)}</span></div>`).join('')
+      }</div>
     `;
-
-    const breakdown = computeBreakdown(folderEntries);
-    const breakdownEl = card.querySelector('.folder-report-breakdown');
-    breakdownEl.innerHTML = breakdown.length === 0
-      ? '<p class="report-line">Немає даних</p>'
-      : breakdown.map((b) => `<div class="report-line"><span>${escapeHtml(b.store)}</span><span>${formatAmount(b.amount)}</span></div>`).join('');
-
-    container.appendChild(card);
+    breakdownsRow.appendChild(card);
   });
+
+  container.appendChild(totalsRow);
+  container.appendChild(breakdownsRow);
 }
 
 function renderMonthOrYearReport() {
