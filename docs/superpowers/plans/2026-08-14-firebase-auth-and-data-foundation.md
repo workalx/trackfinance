@@ -306,6 +306,8 @@ extension to check, on `https://workalx.github.io/trackfinance/`:
 
 **Files:**
 - Modify: `app.js`
+- Modify: `index.html` (script version bump)
+- Modify: `sw.js` (cache version bump)
 
 **Interfaces:**
 - Consumes: `db` from `firebase-config.js`; `currentUser` from Task 1;
@@ -427,14 +429,38 @@ closing `render();` and brace) with:
 Delete the now-unused `makeId()` function (its only caller was the entries
 push above).
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 4: Bump the cache-busting version (Global Constraint: `app.js` changed)**
+
+In `index.html`, bump the script tag:
+
+```html
+  <script type="module" src="app.js?v=7"></script>
+```
+
+In `sw.js`, bump `CACHE_NAME` and the `app.js` entry to match:
+
+```js
+const CACHE_NAME = 'expense-tracker-v14';
+const ASSETS = [
+  './',
+  './index.html',
+  './styles.css?v=9',
+  './app.js?v=7',
+  './firebase-config.js',
+  './manifest.json',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+];
+```
+
+- [ ] **Step 5: Commit**
 
 ```bash
-git add app.js
+git add app.js index.html sw.js
 git commit -m "feat: back entries with Firestore instead of localStorage"
 ```
 
-- [ ] **Step 5: Push and verify on the live site**
+- [ ] **Step 6: Push and verify on the live site**
 
 ```bash
 git push
@@ -457,6 +483,8 @@ signed in:
 
 **Files:**
 - Modify: `app.js`
+- Modify: `index.html` (script version bump)
+- Modify: `sw.js` (cache version bump)
 
 **Interfaces:**
 - Consumes: `db`, `currentUser`, `startDataSubscriptions()` /
@@ -622,14 +650,38 @@ function stopDataSubscriptions() {
 }
 ```
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Bump the cache-busting version (Global Constraint: `app.js` changed)**
+
+In `index.html`, bump the script tag:
+
+```html
+  <script type="module" src="app.js?v=8"></script>
+```
+
+In `sw.js`, bump `CACHE_NAME` and the `app.js` entry to match:
+
+```js
+const CACHE_NAME = 'expense-tracker-v15';
+const ASSETS = [
+  './',
+  './index.html',
+  './styles.css?v=9',
+  './app.js?v=8',
+  './firebase-config.js',
+  './manifest.json',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+];
+```
+
+- [ ] **Step 6: Commit**
 
 ```bash
-git add app.js
+git add app.js index.html sw.js
 git commit -m "feat: back folders and stores with Firestore instead of localStorage"
 ```
 
-- [ ] **Step 6: Push and verify on the live site**
+- [ ] **Step 7: Push and verify on the live site**
 
 ```bash
 git push
