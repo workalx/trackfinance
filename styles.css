@@ -606,3 +606,56 @@ main { padding: 1rem; }
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* Login gate */
+#login-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: var(--bg);
+  z-index: 2000;
+}
+
+#login-screen[hidden] { display: none; }
+
+.login-card {
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 1rem);
+  padding: 2rem 1.5rem;
+}
+
+.login-card h1 { margin: 0 0 0.5rem; font-size: 1.5rem; }
+.login-card p { color: var(--text-muted); margin: 0 0 1.5rem; }
+
+#google-signin-btn {
+  width: 100%;
+  min-height: 3rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--gradient-accent);
+  border: none;
+  border-radius: var(--radius-lg, 0.75rem);
+  cursor: pointer;
+}
+
+.login-error {
+  color: var(--danger);
+  font-size: 0.85rem;
+  margin: 1rem 0 0;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#app-header[hidden], main[hidden], .tab-bar[hidden] { display: none; }

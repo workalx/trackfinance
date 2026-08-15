@@ -1,3 +1,61 @@
+import { auth } from './firebase-config.js';
+import {
+  onAuthStateChanged, signInWithPopup, signOut, GoogleAuthProvider,
+} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+
+let currentUser = null;
+
+function showLoginScreen() {
+  document.getElementById('login-screen').hidden = false;
+  document.getElementById('app-header').hidden = true;
+  document.querySelector('main').hidden = true;
+  document.querySelector('.tab-bar').hidden = true;
+  document.getElementById('sign-out-btn').hidden = true;
+}
+
+function showApp() {
+  document.getElementById('login-screen').hidden = true;
+  document.getElementById('app-header').hidden = false;
+  document.querySelector('main').hidden = false;
+  document.querySelector('.tab-bar').hidden = false;
+  document.getElementById('sign-out-btn').hidden = false;
+}
+
+function startDataSubscriptions() {
+  // Filled in by Task 2 (entries) and Task 3 (profile/folders/stores).
+}
+
+function stopDataSubscriptions() {
+  // Filled in by Task 2 (entries) and Task 3 (profile/folders/stores).
+}
+
+function setupAuth() {
+  document.getElementById('google-signin-btn').addEventListener('click', () => {
+    const errorEl = document.getElementById('login-error');
+    errorEl.hidden = true;
+    signInWithPopup(auth, new GoogleAuthProvider()).catch((err) => {
+      console.error('[auth] sign-in failed:', err);
+      errorEl.textContent = 'Не вдалося увійти. Спробуйте ще раз.';
+      errorEl.hidden = false;
+    });
+  });
+
+  document.getElementById('sign-out-btn').addEventListener('click', () => {
+    signOut(auth).catch((err) => console.error('[auth] sign-out failed:', err));
+  });
+
+  onAuthStateChanged(auth, (user) => {
+    currentUser = user;
+    if (user) {
+      showApp();
+      startDataSubscriptions();
+    } else {
+      stopDataSubscriptions();
+      showLoginScreen();
+    }
+  });
+}
+
 const ENTRIES_KEY = 'expenseTracker.entries';
 const CUSTOM_STORES_KEY = 'expenseTracker.customStores';
 
@@ -837,6 +895,7 @@ function runSetup(name, fn) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  runSetup('setupAuth', setupAuth);
   runSetup('setupTabs', setupTabs);
   runSetup('setupCalendar', setupCalendar);
   runSetup('setupFolderTabs', setupFolderTabs);
@@ -845,5 +904,4 @@ document.addEventListener('DOMContentLoaded', () => {
   runSetup('setupSortToggle', setupSortToggle);
   runSetup('setupReports', setupReports);
   runSetup('setupPrint', setupPrint);
-  runSetup('render', render);
 });
