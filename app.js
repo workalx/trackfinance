@@ -4,7 +4,7 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 import { db } from './firebase-config.js';
 import {
-  collection, doc, query, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, serverTimestamp,
+  collection, doc, query, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, setDoc, serverTimestamp,
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
 let currentUser = null;
@@ -32,11 +32,37 @@ function startDataSubscriptions() {
     render();
     if (!document.getElementById('reports-screen').hidden) renderReports();
   });
+
+  const profileRef = doc(db, 'users', currentUser.uid);
+  profileUnsub = onSnapshot(profileRef, (snap) => {
+    if (!snap.exists()) {
+      setDoc(profileRef, {
+        customFolders: [], storesByFolder: {}, removedDefaultStores: {},
+        language: 'en', theme: 'light',
+      }).catch((err) => console.error('[profile] init failed:', err));
+      return;
+    }
+    const data = snap.data();
+    profileData = {
+      customFolders: data.customFolders || [],
+      storesByFolder: data.storesByFolder || {},
+      removedDefaultStores: data.removedDefaultStores || {},
+      language: data.language || 'en',
+      theme: data.theme || 'light',
+    };
+    if (!allFolders().includes(selectedFolder)) selectedFolder = FIXED_FOLDERS[0];
+    renderFolderTabs();
+    refreshAllStoreSelects();
+    render();
+  });
 }
 
 function stopDataSubscriptions() {
   if (entriesUnsub) { entriesUnsub(); entriesUnsub = null; }
+  if (profileUnsub) { profileUnsub(); profileUnsub = null; }
   entries = [];
+  profileData = { customFolders: [], storesByFolder: {}, removedDefaultStores: {}, language: 'en', theme: 'light' };
+  selectedFolder = FIXED_FOLDERS[0];
 }
 
 function setupAuth() {
@@ -68,76 +94,49 @@ function setupAuth() {
 
 const CUSTOM_STORES_KEY = 'expenseTracker.customStores';
 
-const CUSTOM_FOLDERS_KEY = 'expenseTracker.customFolders';
-const STORES_BY_FOLDER_KEY = 'expenseTracker.storesByFolder';
 const FIXED_FOLDERS = ['Продукти', "Обов'язкові платежі", 'Інше'];
+const DEFAULT_STORES_BY_FOLDER = { 'Продукти': ['Walmart', 'Dollarama', 'Freshco', 'Costco'] };
 
-function loadCustomFolders() {
-  try {
-    const raw = localStorage.getItem(CUSTOM_FOLDERS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveCustomFolders(list) {
-  try {
-    localStorage.setItem(CUSTOM_FOLDERS_KEY, JSON.stringify(list));
-  } catch {
-    // localStorage unavailable - continue without persistence
-  }
-}
+let profileData = { customFolders: [], storesByFolder: {}, removedDefaultStores: {}, language: 'en', theme: 'light' };
+let profileUnsub = null;
 
 function allFolders() {
-  return [...FIXED_FOLDERS, ...loadCustomFolders()];
-}
-
-function loadStoresByFolder() {
-  try {
-    const raw = localStorage.getItem(STORES_BY_FOLDER_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
-}
-
-function saveStoresByFolder(map) {
-  try {
-    localStorage.setItem(STORES_BY_FOLDER_KEY, JSON.stringify(map));
-  } catch {
-    // localStorage unavailable - continue without persistence
-  }
+  return [...FIXED_FOLDERS, ...profileData.customFolders];
 }
 
 function storesForFolder(folder) {
-  const map = loadStoresByFolder();
-  const custom = map[folder] || [];
-  const defaults = folder === 'Продукти' ? ['Walmart', 'Dollarama', 'Freshco', 'Costco'] : [];
-  const removed = map[folder + ':removed'] || [];
+  const custom = profileData.storesByFolder[folder] || [];
+  const defaults = DEFAULT_STORES_BY_FOLDER[folder] || [];
+  const removed = profileData.removedDefaultStores[folder] || [];
   return [...defaults.filter((d) => !removed.includes(d)), ...custom];
 }
 
+function saveProfileFields(fields) {
+  updateDoc(doc(db, 'users', currentUser.uid), fields).catch((err) => console.error('[profile] update failed:', err));
+}
+
 function removeStoreFromFolder(folder, store) {
-  const map = loadStoresByFolder();
-  if (map[folder]) {
-    map[folder] = map[folder].filter((s) => s !== store);
+  const storesByFolder = { ...profileData.storesByFolder };
+  if (storesByFolder[folder]) {
+    storesByFolder[folder] = storesByFolder[folder].filter((s) => s !== store);
   }
-  const defaults = folder === 'Продукти' ? ['Walmart', 'Dollarama', 'Freshco', 'Costco'] : [];
+  const updates = { storesByFolder };
+  const defaults = DEFAULT_STORES_BY_FOLDER[folder] || [];
   if (defaults.includes(store)) {
-    const removedKey = folder + ':removed';
-    map[removedKey] = [...new Set([...(map[removedKey] || []), store])];
+    const removedDefaultStores = { ...profileData.removedDefaultStores };
+    removedDefaultStores[folder] = [...new Set([...(removedDefaultStores[folder] || []), store])];
+    updates.removedDefaultStores = removedDefaultStores;
   }
-  saveStoresByFolder(map);
+  saveProfileFields(updates);
 }
 
 function addStoreToFolder(folder, store) {
-  const map = loadStoresByFolder();
-  map[folder] = map[folder] || [];
-  if (!map[folder].includes(store)) {
-    map[folder].push(store);
+  const storesByFolder = { ...profileData.storesByFolder };
+  storesByFolder[folder] = storesByFolder[folder] ? [...storesByFolder[folder]] : [];
+  if (!storesByFolder[folder].includes(store)) {
+    storesByFolder[folder].push(store);
   }
-  saveStoresByFolder(map);
+  saveProfileFields({ storesByFolder });
 }
 
 function getCurrentMonthYear() {
@@ -147,7 +146,7 @@ function getCurrentMonthYear() {
 
 let entries = [];
 let entriesUnsub = null;
-let selectedFolder = allFolders()[0];
+let selectedFolder = FIXED_FOLDERS[0];
 
 const MONTH_NAMES_UK = ['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
 
@@ -433,9 +432,7 @@ function renderFolderTabs() {
     const name = prompt('Назва папки:');
     const trimmed = (name || '').trim();
     if (!trimmed || allFolders().includes(trimmed)) return;
-    const custom = loadCustomFolders();
-    custom.push(trimmed);
-    saveCustomFolders(custom);
+    saveProfileFields({ customFolders: [...profileData.customFolders, trimmed] });
     switchFolder(trimmed);
   });
   container.appendChild(addBtn);
