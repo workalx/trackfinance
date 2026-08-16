@@ -7,7 +7,7 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0f172a">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=10">
+  <link rel="stylesheet" href="styles.css?v=11">
 </head>
 <body>
   <section id="login-screen">
@@ -20,9 +20,39 @@
   </section>
 
   <header class="app-header" id="app-header" hidden>
+    <button type="button" id="sidebar-open-btn" data-i18n-aria-label="sidebarOpenAria" aria-label="Відкрити меню">☰</button>
     <h1 data-i18n="appTitle">Мої витрати</h1>
     <button type="button" id="sign-out-btn" class="link-btn" hidden data-i18n="signOutButton">Вийти</button>
   </header>
+
+  <div id="sidebar-backdrop" hidden></div>
+  <aside id="sidebar" hidden>
+    <div class="sidebar-header">
+      <h2 data-i18n="sidebarTitle">Налаштування</h2>
+      <button type="button" id="sidebar-close-btn" data-i18n-aria-label="sidebarCloseAria" aria-label="Закрити меню">×</button>
+    </div>
+
+    <div class="sidebar-section">
+      <p class="sidebar-section-label" data-i18n="sidebarLanguageLabel">Мова</p>
+      <div class="sidebar-option-group">
+        <button type="button" class="sidebar-option-btn" data-lang="uk">Українська</button>
+        <button type="button" class="sidebar-option-btn" data-lang="en">English</button>
+        <button type="button" class="sidebar-option-btn" data-lang="ru">Русский</button>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <p class="sidebar-section-label" data-i18n="sidebarThemeLabel">Тема</p>
+      <div class="sidebar-option-group">
+        <button type="button" class="sidebar-option-btn" data-theme-choice="light" data-i18n="themeLight">Світла</button>
+        <button type="button" class="sidebar-option-btn" data-theme-choice="dark" data-i18n="themeDark">Темна</button>
+      </div>
+    </div>
+
+    <hr class="sidebar-divider">
+
+    <button type="button" id="sidebar-manage-stores-btn" class="link-btn" data-i18n="manageStoresLink">Керувати магазинами</button>
+  </aside>
 
   <main hidden>
     <section id="add-screen">
@@ -41,8 +71,6 @@
         <button type="button" id="add-row-btn" data-i18n="addRowButton">+ Додати рядок</button>
         <button type="button" id="save-all-btn" disabled data-i18n="saveAllButton">Зберегти все</button>
       </div>
-
-      <button type="button" id="manage-stores-btn" class="link-btn" data-i18n="manageStoresLink">Керувати магазинами</button>
 
       <div class="list-header">
         <h2 data-i18n="listHeaderTitle">Мої витрати</h2>
@@ -106,7 +134,7 @@
     <button type="button" id="tab-reports" class="tab-btn" data-i18n="tabReports">Звіти</button>
   </nav>
 
-  <script type="module" src="app.js?v=11"></script>
+  <script type="module" src="app.js?v=12"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
