@@ -7,12 +7,12 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0f172a">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=9">
+  <link rel="stylesheet" href="styles.css?v=10">
 </head>
 <body>
   <section id="login-screen">
     <div class="login-card">
-      <h1>TrackFinance</h1>
+      <h1 class="gradient-text">TrackFinance</h1>
       <p data-i18n="loginSubtitle">Увійдіть, щоб побачити свої витрати.</p>
       <button type="button" id="google-signin-btn" data-i18n="signInButton">Увійти через Google</button>
       <p id="login-error" class="login-error" hidden></p>
@@ -28,7 +28,7 @@
     <section id="add-screen">
       <div id="folder-tabs" class="folder-tabs"></div>
 
-      <p class="monthly-total-label"><span data-i18n="monthlyTotalPrefix">Всього за</span> <span id="month-name"></span>: <span id="monthly-total">$0.00</span></p>
+      <p class="monthly-total-label"><span data-i18n="monthlyTotalPrefix">Всього за</span> <span id="month-name"></span>: <span id="monthly-total" class="gradient-text">$0.00</span></p>
 
       <button type="button" id="date-field-btn" class="date-field">
         <span id="date-field-label">Сьогодні</span>
@@ -106,7 +106,7 @@
     <button type="button" id="tab-reports" class="tab-btn" data-i18n="tabReports">Звіти</button>
   </nav>
 
-  <script type="module" src="app.js?v=10"></script>
+  <script type="module" src="app.js?v=11"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));

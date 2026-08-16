@@ -53,6 +53,7 @@ function startDataSubscriptions() {
     };
     if (!allFolders().includes(selectedFolder)) selectedFolder = FIXED_FOLDERS[0];
     applyTranslations();
+    applyTheme();
     renderFolderTabs();
     refreshAllStoreSelects();
     render();
@@ -130,6 +131,10 @@ function applyTranslations() {
     el.setAttribute('aria-label', t(el.dataset.i18nAriaLabel));
   });
   document.title = t('appTitle');
+}
+
+function applyTheme() {
+  document.documentElement.dataset.theme = profileData.theme || 'light';
 }
 
 let profileData = { customFolders: [], storesByFolder: {}, removedDefaultStores: {}, language: 'en', theme: 'light' };
@@ -744,7 +749,7 @@ function renderFolderBreakdownBlock(container, listForTotals) {
     totalCard.className = 'folder-total-card';
     totalCard.innerHTML = `
       <span class="folder-total-name">${escapeHtml(folderLabel(folder))}</span>
-      <span class="folder-total-amount">${formatAmount(folderTotal)}</span>
+      <span class="folder-total-amount gradient-text">${formatAmount(folderTotal)}</span>
     `;
     totalsRow.appendChild(totalCard);
 
@@ -786,7 +791,7 @@ function renderMonthOrYearReport() {
 
   const total = list.reduce((sum, e) => sum + e.amount, 0);
   const content = document.getElementById('report-content');
-  content.innerHTML = `<p class="report-grand-total">${t('reportTotalLabel')} <span>${formatAmount(total)}</span></p>`;
+  content.innerHTML = `<p class="report-grand-total">${t('reportTotalLabel')} <span class="gradient-text">${formatAmount(total)}</span></p>`;
 
   renderFolderBreakdownBlock(content, list);
 }
@@ -875,7 +880,7 @@ function renderPeriodReport() {
   const total = matches.reduce((sum, e) => sum + e.amount, 0);
 
   if (matches.length === 0) {
-    content.innerHTML = `<p class="report-grand-total">${t('reportTotalLabel')} <span>${formatAmount(total)}</span></p><p class="report-line">${escapeHtml(t('reportNoDataPeriod'))}</p>`;
+    content.innerHTML = `<p class="report-grand-total">${t('reportTotalLabel')} <span class="gradient-text">${formatAmount(total)}</span></p><p class="report-line">${escapeHtml(t('reportNoDataPeriod'))}</p>`;
     return;
   }
 
@@ -890,7 +895,7 @@ function renderPeriodReport() {
   `).join('');
 
   content.innerHTML = `
-    <p class="report-grand-total">${t('reportTotalLabel')} <span>${formatAmount(total)}</span></p>
+    <p class="report-grand-total">${t('reportTotalLabel')} <span class="gradient-text">${formatAmount(total)}</span></p>
     <div class="period-table">
       <div class="period-row period-header">
         <span>${escapeHtml(t('periodColDate'))}</span><span>${escapeHtml(t('periodColFolder'))}</span><span>${escapeHtml(t('periodColStore'))}</span><span>${escapeHtml(t('periodColAmount'))}</span>
@@ -914,6 +919,7 @@ function runSetup(name, fn) {
 
 document.addEventListener('DOMContentLoaded', () => {
   runSetup('applyTranslations', applyTranslations);
+  runSetup('applyTheme', applyTheme);
   runSetup('setupAuth', setupAuth);
   runSetup('setupTabs', setupTabs);
   runSetup('setupCalendar', setupCalendar);

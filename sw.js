@@ -1,9 +1,9 @@
-const CACHE_NAME = 'expense-tracker-v17';
+const CACHE_NAME = 'expense-tracker-v18';
 const ASSETS = [
   './',
   './index.html',
-  './styles.css?v=9',
-  './app.js?v=10',
+  './styles.css?v=10',
+  './app.js?v=11',
   './firebase-config.js',
   './i18n.js',
   './manifest.json',
