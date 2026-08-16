@@ -117,66 +117,112 @@ the exact key list so the implementer isn't guessing at coverage.
   reconciled by the next profile snapshot exactly like the other
   optimistic-update fixes from sub-project 1's final review.
 
-### Theme design (via `ui-ux-pro-max`)
+### Theme design (via `ui-ux-pro-max`, revised per user feedback)
 
-The existing palette (`styles.css:1-26`) already closely matches
-recommended fintech/personal-finance palettes for both modes, so this is a
-refinement, not a replacement — keeps continuity with the brand accent
-(blue→violet gradient) already established across buttons, folder tabs, and
-report cards.
+User asked explicitly for a softer, more pastel palette with a gradient
+page background and "more interesting" text/block styling — a step beyond
+the initial flat-color refinement. This revision keeps the same
+architecture (CSS custom properties swapped via `:root[data-theme="dark"]`)
+but replaces the token values and adds two new treatments: a fixed
+gradient page background, and gradient-text on the app's key numbers.
+Button/CTA accent values are kept close to their current saturation
+deliberately — pastel is applied to backgrounds, borders, and secondary
+surfaces, not to anything carrying white button text, so no WCAG contrast
+regression versus the already-shipped buttons.
 
-**Light** (`:root`, unchanged values keep the existing brand identity):
+**Light** (`:root`):
 ```css
---bg: #f8fafc;
+--bg: #f5f3ff;
+--bg-gradient: linear-gradient(160deg, #f5f3ff 0%, #eef2ff 45%, #ecfeff 100%);
 --surface: #ffffff;
---text: #0f172a;
---text-muted: #64748b;
---accent: #2563eb;
---accent-2: #7c3aed;
---danger: #dc2626;
---border: #e2e8f0;
---radius-lg: 1rem;
-/* new elevation tokens */
---shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
---shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
---shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.14);
-```
-
-**Dark** (`:root[data-theme="dark"]`, one refinement — softer translucent
-border instead of a flat solid one, matching the glass-card treatment
-already used elsewhere in this app):
-```css
---bg: #0f172a;
---surface: #1e293b;
---text: #f1f5f9;
---text-muted: #94a3b8;
---accent: #60a5fa;
+--surface-tint: color-mix(in srgb, #ffffff 92%, #c4b5fd 8%);
+--text: #1e1b4b;
+--text-muted: #6b6b8a;
+--accent: #6d5ef0;
 --accent-2: #a78bfa;
---danger: #f87171;
---border: rgba(255, 255, 255, 0.08);   /* was #334155 */
-/* new elevation tokens */
---shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
---shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
---shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.5);
+--gradient-accent: linear-gradient(135deg, var(--accent), var(--accent-2));
+--accent-pastel: #e0e7ff;
+--danger: #f43f5e;
+--border: #e5e0fa;
+--radius-lg: 1.1rem;
+--shadow-sm: 0 1px 2px rgba(76, 61, 158, 0.06);
+--shadow-md: 0 4px 14px rgba(76, 61, 158, 0.10);
+--shadow-lg: 0 16px 36px rgba(76, 61, 158, 0.16);
 ```
 
+**Dark** (`:root[data-theme="dark"]`):
+```css
+--bg: #1a1730;
+--bg-gradient: linear-gradient(160deg, #1e1b3a 0%, #171334 45%, #0f1729 100%);
+--surface: #241f45;
+--surface-tint: color-mix(in srgb, #241f45 88%, #818cf8 12%);
+--text: #edebff;
+--text-muted: #a9a6d6;
+--accent: #8b7ef8;
+--accent-2: #d9a8fb;
+--gradient-accent: linear-gradient(135deg, var(--accent), var(--accent-2));
+--accent-pastel: #332e63;
+--danger: #fb7185;
+--border: rgba(196, 181, 253, 0.14);
+--shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+--shadow-md: 0 4px 18px rgba(0, 0, 0, 0.45);
+--shadow-lg: 0 18px 42px rgba(0, 0, 0, 0.55);
+```
+
+Both `--accent`/`--accent-2` were nudged only slightly off the current
+brand blue/violet (not replaced) so `--gradient-accent` (used on
+`#save-all-btn`, `#print-btn`, `#google-signin-btn`, `.selected` pills)
+still carries white text at a verified ≥4.5:1 contrast ratio in both
+themes — the pastel shift lives in `--border`, `--accent-pastel`, and the
+new `--bg-gradient`/`--surface-tint`, which never sit under white text.
+
+- **`--bg-gradient` replaces the flat `background: var(--bg)` on `body`.**
+  This is the main visible change: the whole page sits on a soft
+  multi-stop wash instead of a single flat color. `--bg` is kept as a
+  fallback token (used where a flat color is still needed, e.g.
+  `@media print`) and as the gradient's own base stop.
+- **`--surface-tint`** is a new token for "interesting blocks": a barely-
+  tinted variant of `--surface`, mixed 8-12% toward the accent, for
+  elements that should read as *slightly* elevated/different from a plain
+  white/dark card without a full gradient — e.g. `.folder-total-card`,
+  `.manage-store-row`. `--surface` itself stays closer to neutral for
+  elements with denser text (`.entry-row`, `.folder-report-card`'s
+  breakdown lines) so body text contrast isn't affected.
+- **Gradient text** on the app's headline numbers, via
+  `background: var(--gradient-accent); background-clip: text; -webkit-background-clip: text; color: transparent;`
+  applied to: `#monthly-total`, `.report-grand-total span`,
+  `.folder-total-amount`, and the `<h1>` in `.login-card`. This is
+  decorative only — it never touches body copy, labels, or anything that
+  needs to stay screen-reader-plain-readable as color (the underlying text
+  content is unchanged, `background-clip: text` doesn't affect the
+  accessibility tree).
 - Apply `--shadow-md` to `.folder-report-card`, `.folder-total-card`,
   `.entry-row`, `.manage-store-row`, `#login-screen .login-card` (replacing
-  or supplementing whatever shadow they have today, if any) for a
-  consistent elevation scale instead of ad-hoc per-component values.
-  Apply `--shadow-lg` to the sidebar panel itself and the calendar sheet
-  (both overlay surfaces).
+  whatever shadow they have today, if any) for a consistent elevation
+  scale instead of ad-hoc per-component values. Apply `--shadow-lg` to the
+  sidebar panel and the calendar sheet (both overlay surfaces). Because the
+  new shadow tokens are tinted with the accent hue (`rgba(76, 61, 158, ...)`
+  in light, pure black in dark) instead of plain gray/black, cards read as
+  "glowing" slightly rather than flatly dropping a gray shadow — reinforces
+  the pastel/soft feel without needing per-component color choices.
+- Bump `.folder-report-card`/`.folder-total-card`/`.entry-row`/
+  `.manage-store-row`/`.login-card`'s `border-radius` to `var(--radius-lg)`
+  (now `1.1rem`, up from the mix of `0.75rem`/`1rem` used today) for a
+  softer, friendlier block shape consistent with the pastel treatment.
 - **Smooth toggle transition**: add
-  `transition: background-color 300ms ease, color 300ms ease, border-color 300ms ease, box-shadow 300ms ease;`
+  `transition: background-color 300ms ease, background-image 300ms ease, color 300ms ease, border-color 300ms ease, box-shadow 300ms ease;`
   to `body`, `.entry-row`, `.folder-report-card`, `.folder-total-card`,
   `.manage-store-row`, `#login-screen`, `.login-card`, `#sidebar` — the set
-  of elements whose background/text/border actually differ between themes.
-  Guard inside the existing `@media (prefers-reduced-motion: no-preference)`
-  block already used for the entrance/press animations, so users who've
-  asked for reduced motion get an instant switch instead.
+  of elements whose background/text/border actually differ between themes
+  (`background-image` is included so `--bg-gradient` itself crossfades,
+  not just solid-color tokens). Guard inside the existing
+  `@media (prefers-reduced-motion: no-preference)` block already used for
+  the entrance/press animations, so users who've asked for reduced motion
+  get an instant switch instead.
 - Existing dark-mode press/entrance animations and the `.link-btn`,
-  `#print-btn`, etc. styling are untouched — only the token values and the
-  trigger mechanism change.
+  `#print-btn`, etc. structural styling are untouched — only token values,
+  the gradient background, the gradient-text treatment, and the trigger
+  mechanism change.
 
 ## Sidebar
 
