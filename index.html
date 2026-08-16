@@ -13,22 +13,22 @@
   <section id="login-screen">
     <div class="login-card">
       <h1>TrackFinance</h1>
-      <p>Увійдіть, щоб побачити свої витрати.</p>
-      <button type="button" id="google-signin-btn">Увійти через Google</button>
+      <p data-i18n="loginSubtitle">Увійдіть, щоб побачити свої витрати.</p>
+      <button type="button" id="google-signin-btn" data-i18n="signInButton">Увійти через Google</button>
       <p id="login-error" class="login-error" hidden></p>
     </div>
   </section>
 
   <header class="app-header" id="app-header" hidden>
-    <h1>Мої витрати</h1>
-    <button type="button" id="sign-out-btn" class="link-btn" hidden>Вийти</button>
+    <h1 data-i18n="appTitle">Мої витрати</h1>
+    <button type="button" id="sign-out-btn" class="link-btn" hidden data-i18n="signOutButton">Вийти</button>
   </header>
 
   <main hidden>
     <section id="add-screen">
       <div id="folder-tabs" class="folder-tabs"></div>
 
-      <p class="monthly-total-label">Всього за <span id="month-name"></span>: <span id="monthly-total">$0.00</span></p>
+      <p class="monthly-total-label"><span data-i18n="monthlyTotalPrefix">Всього за</span> <span id="month-name"></span>: <span id="monthly-total">$0.00</span></p>
 
       <button type="button" id="date-field-btn" class="date-field">
         <span id="date-field-label">Сьогодні</span>
@@ -38,56 +38,56 @@
       <div id="add-rows"></div>
 
       <div class="add-actions">
-        <button type="button" id="add-row-btn">+ Додати рядок</button>
-        <button type="button" id="save-all-btn" disabled>Зберегти все</button>
+        <button type="button" id="add-row-btn" data-i18n="addRowButton">+ Додати рядок</button>
+        <button type="button" id="save-all-btn" disabled data-i18n="saveAllButton">Зберегти все</button>
       </div>
 
-      <button type="button" id="manage-stores-btn" class="link-btn">Керувати магазинами</button>
+      <button type="button" id="manage-stores-btn" class="link-btn" data-i18n="manageStoresLink">Керувати магазинами</button>
 
       <div class="list-header">
-        <h2>Мої витрати</h2>
-        <button type="button" id="sort-toggle-btn">За датою</button>
+        <h2 data-i18n="listHeaderTitle">Мої витрати</h2>
+        <button type="button" id="sort-toggle-btn" data-i18n="sortByDate">За датою</button>
       </div>
       <section id="entries-list" aria-live="polite"></section>
-      <p id="empty-state" hidden>Поки немає витрат.</p>
+      <p id="empty-state" hidden data-i18n="emptyState">Поки немає витрат.</p>
     </section>
 
     <section id="manage-stores-screen" hidden>
       <div class="screen-header">
-        <button type="button" id="manage-stores-back" aria-label="Назад">‹</button>
+        <button type="button" id="manage-stores-back" data-i18n-aria-label="manageStoresBackAria" aria-label="Назад">‹</button>
         <h2 id="manage-stores-title">Магазини</h2>
       </div>
       <div id="manage-stores-list"></div>
-      <p id="manage-stores-empty" hidden>Немає магазинів у цій папці.</p>
+      <p id="manage-stores-empty" hidden data-i18n="manageStoresEmpty">Немає магазинів у цій папці.</p>
     </section>
 
     <div id="calendar-backdrop" class="calendar-backdrop" hidden>
-      <div id="calendar-sheet" class="calendar-sheet" role="dialog" aria-modal="true" aria-label="Оберіть дату">
+      <div id="calendar-sheet" class="calendar-sheet" role="dialog" aria-modal="true" data-i18n-aria-label="calendarAriaLabel" aria-label="Оберіть дату">
         <div class="calendar-handle"></div>
         <div class="calendar-header">
-          <button type="button" id="cal-prev" aria-label="Попередній місяць">‹</button>
+          <button type="button" id="cal-prev" data-i18n-aria-label="calendarPrevMonthAria" aria-label="Попередній місяць">‹</button>
           <span id="cal-month-label"></span>
-          <button type="button" id="cal-next" aria-label="Наступний місяць">›</button>
+          <button type="button" id="cal-next" data-i18n-aria-label="calendarNextMonthAria" aria-label="Наступний місяць">›</button>
         </div>
         <div class="calendar-weekdays">
-          <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Нд</span>
+          <span data-i18n="weekdayMon">Пн</span><span data-i18n="weekdayTue">Вт</span><span data-i18n="weekdayWed">Ср</span><span data-i18n="weekdayThu">Чт</span><span data-i18n="weekdayFri">Пт</span><span data-i18n="weekdaySat">Сб</span><span data-i18n="weekdaySun">Нд</span>
         </div>
         <div id="cal-grid" class="calendar-grid"></div>
-        <button type="button" id="cal-close" class="calendar-close">Закрити</button>
+        <button type="button" id="cal-close" class="calendar-close" data-i18n="calendarClose">Закрити</button>
       </div>
     </div>
 
     <section id="reports-screen" hidden>
       <div class="report-mode-switch">
-        <button type="button" class="report-mode-btn selected" data-mode="month">Місяць</button>
-        <button type="button" class="report-mode-btn" data-mode="year">Рік</button>
-        <button type="button" class="report-mode-btn" data-mode="period">Період</button>
+        <button type="button" class="report-mode-btn selected" data-mode="month" data-i18n="reportModeMonth">Місяць</button>
+        <button type="button" class="report-mode-btn" data-mode="year" data-i18n="reportModeYear">Рік</button>
+        <button type="button" class="report-mode-btn" data-mode="period" data-i18n="reportModePeriod">Період</button>
       </div>
 
       <div id="report-nav" class="report-nav">
-        <button type="button" id="report-prev" aria-label="Попередній період">‹</button>
+        <button type="button" id="report-prev" data-i18n-aria-label="reportPrevPeriodAria" aria-label="Попередній період">‹</button>
         <span id="report-period-label"></span>
-        <button type="button" id="report-next" aria-label="Наступний період">›</button>
+        <button type="button" id="report-next" data-i18n-aria-label="reportNextPeriodAria" aria-label="Наступний період">›</button>
       </div>
 
       <div id="report-period-pickers" class="report-period-pickers" hidden>
@@ -95,18 +95,18 @@
         <button type="button" id="period-to-btn" class="date-field"></button>
       </div>
 
-      <button type="button" id="print-btn">Друкувати</button>
+      <button type="button" id="print-btn" data-i18n="printButton">Друкувати</button>
 
       <div id="report-content"></div>
     </section>
   </main>
 
   <nav class="tab-bar" hidden>
-    <button type="button" id="tab-add" class="tab-btn selected">Додати</button>
-    <button type="button" id="tab-reports" class="tab-btn">Звіти</button>
+    <button type="button" id="tab-add" class="tab-btn selected" data-i18n="tabAdd">Додати</button>
+    <button type="button" id="tab-reports" class="tab-btn" data-i18n="tabReports">Звіти</button>
   </nav>
 
-  <script type="module" src="app.js?v=9"></script>
+  <script type="module" src="app.js?v=10"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));

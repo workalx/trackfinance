@@ -6,6 +6,7 @@ import { db } from './firebase-config.js';
 import {
   collection, doc, query, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, setDoc, serverTimestamp,
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+import { translations, MONTH_NAMES, MONTH_NAMES_GENITIVE, FIXED_FOLDER_LABELS } from './i18n.js';
 
 let currentUser = null;
 
@@ -51,10 +52,12 @@ function startDataSubscriptions() {
       theme: data.theme || 'light',
     };
     if (!allFolders().includes(selectedFolder)) selectedFolder = FIXED_FOLDERS[0];
+    applyTranslations();
     renderFolderTabs();
     refreshAllStoreSelects();
     render();
     if (!document.getElementById('manage-stores-screen').hidden) renderManageStores();
+    if (!document.getElementById('reports-screen').hidden) renderReports();
   }, (err) => console.error('[profile] subscription failed:', err));
 }
 
@@ -77,7 +80,7 @@ function setupAuth() {
     errorEl.hidden = true;
     signInWithPopup(auth, new GoogleAuthProvider()).catch((err) => {
       console.error('[auth] sign-in failed:', err);
-      errorEl.textContent = 'Не вдалося увійти. Спробуйте ще раз.';
+      errorEl.textContent = t('signInError');
       errorEl.hidden = false;
     });
   });
@@ -102,6 +105,32 @@ const CUSTOM_STORES_KEY = 'expenseTracker.customStores';
 
 const FIXED_FOLDERS = ['Продукти', "Обов'язкові платежі", 'Інше'];
 const DEFAULT_STORES_BY_FOLDER = { 'Продукти': ['Walmart', 'Dollarama', 'Freshco', 'Costco'] };
+
+function t(key) {
+  const lang = profileData.language || 'en';
+  return (translations[lang] && translations[lang][key]) || translations.en[key] || key;
+}
+
+function folderLabel(folderName) {
+  const lang = profileData.language || 'en';
+  const entry = FIXED_FOLDER_LABELS[folderName];
+  return entry ? (entry[lang] || entry.en) : folderName;
+}
+
+function applyTranslations() {
+  const lang = profileData.language || 'en';
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach((el) => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
+    el.placeholder = t(el.dataset.i18nPlaceholder);
+  });
+  document.querySelectorAll('[data-i18n-aria-label]').forEach((el) => {
+    el.setAttribute('aria-label', t(el.dataset.i18nAriaLabel));
+  });
+  document.title = t('appTitle');
+}
 
 let profileData = { customFolders: [], storesByFolder: {}, removedDefaultStores: {}, language: 'en', theme: 'light' };
 let profileUnsub = null;
@@ -156,8 +185,6 @@ let entries = [];
 let entriesUnsub = null;
 let selectedFolder = FIXED_FOLDERS[0];
 
-const MONTH_NAMES_UK = ['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
-
 function formatAmount(n) {
   return `$${n.toFixed(2)}`;
 }
@@ -180,7 +207,7 @@ function groupEntriesByDay(list) {
 
 function render() {
   const { month, year } = getCurrentMonthYear();
-  document.getElementById('month-name').textContent = MONTH_NAMES_UK[month - 1];
+  document.getElementById('month-name').textContent = MONTH_NAMES[profileData.language || 'en'][month - 1];
 
   const folderEntries = entries.filter((e) => e.folder === selectedFolder);
 
@@ -212,7 +239,7 @@ function render() {
 
     const header = document.createElement('div');
     header.className = 'day-block-header';
-    header.textContent = formatFullDateUk(block.day, block.month, block.year);
+    header.textContent = formatFullDate(block.day, block.month, block.year);
     blockEl.appendChild(header);
 
     block.entries
@@ -228,8 +255,8 @@ function render() {
           </div>
           <span class="entry-amount">${formatAmount(entry.amount)}</span>
           <div class="entry-actions">
-            <button type="button" class="edit-btn" aria-label="Редагувати">✎</button>
-            <button type="button" class="delete-btn" aria-label="Видалити">🗑</button>
+            <button type="button" class="edit-btn" aria-label="${escapeHtml(t('editAria'))}">✎</button>
+            <button type="button" class="delete-btn" aria-label="${escapeHtml(t('deleteAria'))}">🗑</button>
           </div>
         `;
         blockEl.appendChild(row);
@@ -242,7 +269,7 @@ function render() {
 function setupSortToggle() {
   document.getElementById('sort-toggle-btn').addEventListener('click', () => {
     listSortMode = listSortMode === 'date' ? 'order' : 'date';
-    document.getElementById('sort-toggle-btn').textContent = listSortMode === 'date' ? 'За датою' : 'За порядком додавання';
+    document.getElementById('sort-toggle-btn').textContent = listSortMode === 'date' ? t('sortByDate') : t('sortByOrder');
     render();
   });
 }
@@ -260,10 +287,9 @@ function daysInMonth(month, year) {
 const STORE_OPTION_SENTINEL = '__add_custom__';
 const MONTHS_BACK_LIMIT = 20;
 
-const MONTH_NAMES_UK_GENITIVE = ['січня','лютого','березня','квітня','травня','червня','липня','серпня','вересня','жовтня','листопада','грудня'];
-
-function formatFullDateUk(day, month, year) {
-  return `${day} ${MONTH_NAMES_UK_GENITIVE[month - 1]} ${year}`;
+function formatFullDate(day, month, year) {
+  const lang = profileData.language || 'en';
+  return `${day} ${MONTH_NAMES_GENITIVE[lang][month - 1]} ${year}`;
 }
 
 function todayDate() {
@@ -287,15 +313,15 @@ function updateDateFieldLabel() {
   const today = todayDate();
   const label = document.getElementById('date-field-label');
   if (selectedDate.day === today.day && selectedDate.month === today.month && selectedDate.year === today.year) {
-    label.textContent = `Сьогодні, ${formatFullDateUk(selectedDate.day, selectedDate.month, selectedDate.year)}`;
+    label.textContent = `${t('todayPrefix')}, ${formatFullDate(selectedDate.day, selectedDate.month, selectedDate.year)}`;
   } else {
-    label.textContent = formatFullDateUk(selectedDate.day, selectedDate.month, selectedDate.year);
+    label.textContent = formatFullDate(selectedDate.day, selectedDate.month, selectedDate.year);
   }
 }
 
 function renderCalendarGrid() {
   const today = todayDate();
-  document.getElementById('cal-month-label').textContent = `${MONTH_NAMES_UK[calCursor.month - 1]} ${calCursor.year}`;
+  document.getElementById('cal-month-label').textContent = `${MONTH_NAMES[profileData.language || 'en'][calCursor.month - 1]} ${calCursor.year}`;
 
   const earliest = addMonths(today.month, today.year, -MONTHS_BACK_LIMIT);
   document.getElementById('cal-prev').disabled = isSameMonth(calCursor, earliest);
@@ -395,7 +421,7 @@ function populateStoreOptions(selectEl) {
 
   const blank = document.createElement('option');
   blank.value = '';
-  blank.textContent = 'Магазин';
+  blank.textContent = t('storeSelectBlank');
   selectEl.appendChild(blank);
 
   storesForFolder(selectedFolder).forEach((name) => {
@@ -407,7 +433,7 @@ function populateStoreOptions(selectEl) {
 
   const addOpt = document.createElement('option');
   addOpt.value = STORE_OPTION_SENTINEL;
-  addOpt.textContent = '+ свій';
+  addOpt.textContent = t('storeSelectAddCustom');
   selectEl.appendChild(addOpt);
 
   if ([...selectEl.options].some((o) => o.value === previousValue)) {
@@ -427,7 +453,7 @@ function renderFolderTabs() {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'folder-tab' + (name === selectedFolder ? ' selected' : '');
-    btn.textContent = name;
+    btn.textContent = folderLabel(name);
     btn.addEventListener('click', () => switchFolder(name));
     container.appendChild(btn);
   });
@@ -437,7 +463,7 @@ function renderFolderTabs() {
   addBtn.className = 'folder-tab add-folder';
   addBtn.textContent = '+';
   addBtn.addEventListener('click', () => {
-    const name = prompt('Назва папки:');
+    const name = prompt(t('addFolderPrompt'));
     const trimmed = (name || '').trim();
     if (!trimmed || allFolders().includes(trimmed)) return;
     const customFolders = [...profileData.customFolders, trimmed];
@@ -460,7 +486,7 @@ function setupFolderTabs() {
 }
 
 function renderManageStores() {
-  document.getElementById('manage-stores-title').textContent = `Магазини — ${selectedFolder}`;
+  document.getElementById('manage-stores-title').textContent = `${t('manageStoresTitlePrefix')} — ${folderLabel(selectedFolder)}`;
   const list = document.getElementById('manage-stores-list');
   const empty = document.getElementById('manage-stores-empty');
   list.innerHTML = '';
@@ -477,7 +503,7 @@ function renderManageStores() {
     row.className = 'manage-store-row';
     row.innerHTML = `
       <span>${escapeHtml(name)}</span>
-      <button type="button" aria-label="Видалити магазин">🗑</button>
+      <button type="button" aria-label="${escapeHtml(t('deleteStoreAria'))}">🗑</button>
     `;
     row.querySelector('button').addEventListener('click', () => {
       removeStoreFromFolder(selectedFolder, name);
@@ -508,9 +534,9 @@ function createRow() {
   const row = document.createElement('div');
   row.className = 'add-row';
   row.innerHTML = `
-    <select class="row-store" aria-label="Магазин"></select>
-    <input type="number" class="row-amount" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" aria-label="Сума">
-    <button type="button" class="row-remove" aria-label="Видалити рядок">×</button>
+    <select class="row-store" aria-label="${escapeHtml(t('storeSelectBlank'))}"></select>
+    <input type="number" class="row-amount" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" aria-label="${escapeHtml(t('amountAria'))}">
+    <button type="button" class="row-remove" aria-label="${escapeHtml(t('rowRemoveAria'))}">×</button>
   `;
 
   populateStoreOptions(row.querySelector('.row-store'));
@@ -520,7 +546,7 @@ function createRow() {
       updateSaveAllButtonState();
       return;
     }
-    const name = prompt('Назва магазину:');
+    const name = prompt(t('addStorePrompt'));
     const trimmed = (name || '').trim();
     if (!trimmed) {
       e.target.value = '';
@@ -623,26 +649,26 @@ function editEntry(id) {
 
   const maxDay = daysInMonth(entry.month, entry.year);
 
-  const newDayRaw = prompt(`День (1-${maxDay}):`, String(entry.day));
+  const newDayRaw = prompt(`${t('editDayPromptPrefix')}${maxDay}):`, String(entry.day));
   if (newDayRaw === null) return;
   const newDay = Number(newDayRaw);
   if (!newDay || newDay < 1 || newDay > maxDay) {
-    alert('Некоректний день.');
+    alert(t('editDayInvalid'));
     return;
   }
 
-  const newStore = prompt('Магазин:', entry.store);
+  const newStore = prompt(t('editStorePrompt'), entry.store);
   if (newStore === null) return;
   if (!newStore.trim()) {
-    alert('Назва магазину не може бути порожньою.');
+    alert(t('editStoreEmptyError'));
     return;
   }
 
-  const newAmountRaw = prompt('Сума ($):', String(entry.amount));
+  const newAmountRaw = prompt(t('editAmountPrompt'), String(entry.amount));
   if (newAmountRaw === null) return;
   const newAmount = Number(newAmountRaw);
   if (!newAmount || newAmount <= 0) {
-    alert('Некоректна сума.');
+    alert(t('editAmountInvalid'));
     return;
   }
 
@@ -663,7 +689,7 @@ document.getElementById('entries-list').addEventListener('click', (e) => {
   const id = row.dataset.id;
 
   if (e.target.closest('.delete-btn')) {
-    if (confirm('Видалити цей запис?')) deleteEntry(id);
+    if (confirm(t('deleteConfirm'))) deleteEntry(id);
   } else if (e.target.closest('.edit-btn')) {
     editEntry(id);
   }
@@ -717,7 +743,7 @@ function renderFolderBreakdownBlock(container, listForTotals) {
     const totalCard = document.createElement('div');
     totalCard.className = 'folder-total-card';
     totalCard.innerHTML = `
-      <span class="folder-total-name">${escapeHtml(folder)}</span>
+      <span class="folder-total-name">${escapeHtml(folderLabel(folder))}</span>
       <span class="folder-total-amount">${formatAmount(folderTotal)}</span>
     `;
     totalsRow.appendChild(totalCard);
@@ -726,10 +752,10 @@ function renderFolderBreakdownBlock(container, listForTotals) {
     const card = document.createElement('div');
     card.className = 'folder-report-card';
     card.innerHTML = `
-      <div class="folder-report-header">${escapeHtml(folder)}</div>
+      <div class="folder-report-header">${escapeHtml(folderLabel(folder))}</div>
       <div class="folder-report-breakdown">${
         breakdown.length === 0
-          ? '<p class="report-line">Немає даних</p>'
+          ? `<p class="report-line">${escapeHtml(t('reportNoData'))}</p>`
           : breakdown.map((b) => `<div class="report-line"><span>${escapeHtml(b.store)}</span><span>${formatAmount(b.amount)}</span></div>`).join('')
       }</div>
     `;
@@ -746,7 +772,7 @@ function renderMonthOrYearReport() {
     : computeYearEntries(reportYearCursor);
 
   document.getElementById('report-period-label').textContent = reportMode === 'month'
-    ? `${MONTH_NAMES_UK[reportCursor.month - 1]} ${reportCursor.year}`
+    ? `${MONTH_NAMES[profileData.language || 'en'][reportCursor.month - 1]} ${reportCursor.year}`
     : String(reportYearCursor);
 
   const { month: curMonth, year: curYear } = getCurrentMonthYear();
@@ -760,7 +786,7 @@ function renderMonthOrYearReport() {
 
   const total = list.reduce((sum, e) => sum + e.amount, 0);
   const content = document.getElementById('report-content');
-  content.innerHTML = `<p class="report-grand-total">Всього: <span>${formatAmount(total)}</span></p>`;
+  content.innerHTML = `<p class="report-grand-total">${t('reportTotalLabel')} <span>${formatAmount(total)}</span></p>`;
 
   renderFolderBreakdownBlock(content, list);
 }
@@ -823,8 +849,8 @@ let periodFrom = defaultPeriodFrom();
 let periodTo = todayDate();
 
 function updatePeriodFieldLabels() {
-  document.getElementById('period-from-btn').textContent = formatFullDateUk(periodFrom.day, periodFrom.month, periodFrom.year);
-  document.getElementById('period-to-btn').textContent = formatFullDateUk(periodTo.day, periodTo.month, periodTo.year);
+  document.getElementById('period-from-btn').textContent = formatFullDate(periodFrom.day, periodFrom.month, periodFrom.year);
+  document.getElementById('period-to-btn').textContent = formatFullDate(periodTo.day, periodTo.month, periodTo.year);
 }
 
 function dateValue(d) {
@@ -849,24 +875,25 @@ function renderPeriodReport() {
   const total = matches.reduce((sum, e) => sum + e.amount, 0);
 
   if (matches.length === 0) {
-    content.innerHTML = `<p class="report-grand-total">Всього: <span>${formatAmount(total)}</span></p><p class="report-line">Немає витрат за цей період.</p>`;
+    content.innerHTML = `<p class="report-grand-total">${t('reportTotalLabel')} <span>${formatAmount(total)}</span></p><p class="report-line">${escapeHtml(t('reportNoDataPeriod'))}</p>`;
     return;
   }
 
+  const lang = profileData.language || 'en';
   const rows = matches.map((e) => `
     <div class="period-row">
-      <span>${e.day} ${MONTH_NAMES_UK[e.month - 1]} ${e.year}</span>
-      <span>${escapeHtml(e.folder)}</span>
+      <span>${e.day} ${MONTH_NAMES[lang][e.month - 1]} ${e.year}</span>
+      <span>${escapeHtml(folderLabel(e.folder))}</span>
       <span>${escapeHtml(e.store)}</span>
       <span>${formatAmount(e.amount)}</span>
     </div>
   `).join('');
 
   content.innerHTML = `
-    <p class="report-grand-total">Всього: <span>${formatAmount(total)}</span></p>
+    <p class="report-grand-total">${t('reportTotalLabel')} <span>${formatAmount(total)}</span></p>
     <div class="period-table">
       <div class="period-row period-header">
-        <span>Дата</span><span>Папка</span><span>Магазин</span><span>Сума</span>
+        <span>${escapeHtml(t('periodColDate'))}</span><span>${escapeHtml(t('periodColFolder'))}</span><span>${escapeHtml(t('periodColStore'))}</span><span>${escapeHtml(t('periodColAmount'))}</span>
       </div>
       ${rows}
     </div>
@@ -886,6 +913,7 @@ function runSetup(name, fn) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  runSetup('applyTranslations', applyTranslations);
   runSetup('setupAuth', setupAuth);
   runSetup('setupTabs', setupTabs);
   runSetup('setupCalendar', setupCalendar);
