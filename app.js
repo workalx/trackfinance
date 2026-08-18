@@ -595,6 +595,7 @@ function setupSidebar() {
 
   document.getElementById('sidebar-manage-stores-btn').addEventListener('click', () => {
     closeSidebar();
+    switchTab('add');
     openManageStores();
   });
 }
