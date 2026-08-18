@@ -532,6 +532,14 @@ function closeManageStores() {
 
 function setupManageStores() {
   document.getElementById('manage-stores-back').addEventListener('click', closeManageStores);
+  document.getElementById('manage-stores-add-btn').addEventListener('click', () => {
+    const name = prompt(t('addStorePrompt'));
+    const trimmed = (name || '').trim();
+    if (!trimmed) return;
+    addStoreToFolder(selectedFolder, trimmed);
+    renderManageStores();
+    refreshAllStoreSelects();
+  });
 }
 
 function openSidebar() {
@@ -605,11 +613,22 @@ function createRow() {
   row.className = 'add-row';
   row.innerHTML = `
     <select class="row-store" aria-label="${escapeHtml(t('storeSelectBlank'))}"></select>
+    <button type="button" class="row-add-store" aria-label="${escapeHtml(t('addStoreButtonLabel'))}">+</button>
     <input type="number" class="row-amount" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" aria-label="${escapeHtml(t('amountAria'))}">
     <button type="button" class="row-remove" aria-label="${escapeHtml(t('rowRemoveAria'))}">×</button>
   `;
 
   populateStoreOptions(row.querySelector('.row-store'));
+
+  row.querySelector('.row-add-store').addEventListener('click', () => {
+    const name = prompt(t('addStorePrompt'));
+    const trimmed = (name || '').trim();
+    if (!trimmed) return;
+    addStoreToFolder(selectedFolder, trimmed);
+    refreshAllStoreSelects();
+    row.querySelector('.row-store').value = trimmed;
+    updateSaveAllButtonState();
+  });
 
   row.querySelector('.row-store').addEventListener('change', (e) => {
     if (e.target.value !== STORE_OPTION_SENTINEL) {

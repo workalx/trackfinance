@@ -7,7 +7,7 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0f172a">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=11">
+  <link rel="stylesheet" href="styles.css?v=12">
 </head>
 <body>
   <section id="login-screen">
@@ -86,6 +86,7 @@
         <h2 id="manage-stores-title">Магазини</h2>
       </div>
       <div id="manage-stores-list"></div>
+      <button type="button" id="manage-stores-add-btn" class="link-btn" data-i18n="addStoreButtonLabel">Додати магазин</button>
       <p id="manage-stores-empty" hidden data-i18n="manageStoresEmpty">Немає магазинів у цій папці.</p>
     </section>
 
@@ -134,7 +135,7 @@
     <button type="button" id="tab-reports" class="tab-btn" data-i18n="tabReports">Звіти</button>
   </nav>
 
-  <script type="module" src="app.js?v=12"></script>
+  <script type="module" src="app.js?v=13"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
