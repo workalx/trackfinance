@@ -324,12 +324,13 @@ main { padding: 1rem; }
 @media print {
   .tab-bar, #add-screen, #manage-stores-screen, #calendar-backdrop,
   .report-mode-switch, #report-nav, #report-period-pickers, #print-btn,
-  .app-header {
+  .app-header, #sidebar, #sidebar-backdrop {
     display: none !important;
   }
   body { background: #ffffff; color: #0f172a; padding-bottom: 0; }
   #reports-screen, #report-content { display: block !important; }
   .folder-report-card, .folder-total-card, .period-row { break-inside: avoid; }
+  .gradient-text { background: none; color: #0f172a; -webkit-text-fill-color: #0f172a; }
 }
 
 /* Tab bar */

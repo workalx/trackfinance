@@ -131,6 +131,7 @@ function applyTranslations() {
     el.setAttribute('aria-label', t(el.dataset.i18nAriaLabel));
   });
   document.title = t('appTitle');
+  updateDateFieldLabel();
 }
 
 function applyTheme() {
@@ -274,7 +275,9 @@ function render() {
 function setupSortToggle() {
   document.getElementById('sort-toggle-btn').addEventListener('click', () => {
     listSortMode = listSortMode === 'date' ? 'order' : 'date';
-    document.getElementById('sort-toggle-btn').textContent = listSortMode === 'date' ? t('sortByDate') : t('sortByOrder');
+    const btn = document.getElementById('sort-toggle-btn');
+    btn.dataset.i18n = listSortMode === 'date' ? 'sortByDate' : 'sortByOrder';
+    btn.textContent = t(btn.dataset.i18n);
     render();
   });
 }
@@ -717,6 +720,7 @@ function setupAddForm() {
 
 function switchTab(tabName) {
   const isAdd = tabName === 'add';
+  document.getElementById('manage-stores-screen').hidden = true;
   document.getElementById('add-screen').hidden = !isAdd;
   document.getElementById('reports-screen').hidden = isAdd;
   document.getElementById('tab-add').classList.toggle('selected', isAdd);
