@@ -136,10 +136,12 @@ function applyTranslations() {
   });
   document.title = t('appTitle');
   updateDateFieldLabel();
+  updateSidebarSelection();
 }
 
 function applyTheme() {
   document.documentElement.dataset.theme = profileData.theme || 'light';
+  updateSidebarSelection();
 }
 
 let profileData = { customFolders: [], storesByFolder: {}, removedDefaultStores: {}, language: 'en', theme: 'light' };
@@ -200,6 +202,9 @@ function formatAmount(n) {
   return `$${n.toFixed(2)}`;
 }
 
+const ICON_EDIT = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+const ICON_DELETE = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
 let listSortMode = 'date';
 
 function groupEntriesByDay(list) {
@@ -219,6 +224,7 @@ function groupEntriesByDay(list) {
 function render() {
   const { month, year } = getCurrentMonthYear();
   document.getElementById('month-name').textContent = MONTH_NAMES[profileData.language || 'en'][month - 1];
+  document.getElementById('summary-folder').textContent = folderLabel(selectedFolder);
 
   const folderEntries = entries.filter((e) => e.folder === selectedFolder);
 
@@ -250,7 +256,11 @@ function render() {
 
     const header = document.createElement('div');
     header.className = 'day-block-header';
-    header.textContent = formatFullDate(block.day, block.month, block.year);
+    const dayTotal = block.entries.reduce((sum, e) => sum + e.amount, 0);
+    header.innerHTML = `
+      <span>${escapeHtml(formatFullDate(block.day, block.month, block.year))}</span>
+      <span class="day-block-total">${formatAmount(dayTotal)}</span>
+    `;
     blockEl.appendChild(header);
 
     block.entries
@@ -266,8 +276,8 @@ function render() {
           </div>
           <span class="entry-amount">${formatAmount(entry.amount)}</span>
           <div class="entry-actions">
-            <button type="button" class="edit-btn" aria-label="${escapeHtml(t('editAria'))}">✎</button>
-            <button type="button" class="delete-btn" aria-label="${escapeHtml(t('deleteAria'))}">🗑</button>
+            <button type="button" class="edit-btn" aria-label="${escapeHtml(t('editAria'))}" title="${escapeHtml(t('editAria'))}">${ICON_EDIT}</button>
+            <button type="button" class="delete-btn" aria-label="${escapeHtml(t('deleteAria'))}" title="${escapeHtml(t('deleteAria'))}">${ICON_DELETE}</button>
           </div>
         `;
         blockEl.appendChild(row);
@@ -474,7 +484,7 @@ function renderFolderTabs() {
   const addBtn = document.createElement('button');
   addBtn.type = 'button';
   addBtn.className = 'folder-tab add-folder';
-  addBtn.textContent = '+';
+  addBtn.textContent = `+ ${t('addFolderChip')}`;
   addBtn.addEventListener('click', () => {
     const name = prompt(t('addFolderPrompt'));
     const trimmed = (name || '').trim();
@@ -516,7 +526,7 @@ function renderManageStores() {
     row.className = 'manage-store-row';
     row.innerHTML = `
       <span>${escapeHtml(name)}</span>
-      <button type="button" aria-label="${escapeHtml(t('deleteStoreAria'))}">🗑</button>
+      <button type="button" aria-label="${escapeHtml(t('deleteStoreAria'))}" title="${escapeHtml(t('deleteStoreAria'))}">${ICON_DELETE}</button>
     `;
     row.querySelector('button').addEventListener('click', () => {
       removeStoreFromFolder(selectedFolder, name);
@@ -624,20 +634,27 @@ function setLanguage(lang) {
 
 // Onboarding: an English language picker, then a spotlight tour over the add screen.
 const TOUR_STEPS = [
-  { target: '#folder-tabs', key: 'tourFolders' },
-  { target: '.monthly-total-label', key: 'tourTotal' },
-  { target: '#date-field-btn', key: 'tourDate' },
-  { target: '#add-rows .add-row', key: 'tourRow' },
-  { target: '.add-actions', key: 'tourSave' },
-  { target: '.list-header', key: 'tourList' },
-  { target: '#tab-reports', key: 'tourReports' },
-  { target: '#sidebar-open-btn', key: 'tourMenu' },
-  { target: null, key: 'tourFinish' },
+  { targets: ['#folder-tabs'], key: 'tourFolders' },
+  { targets: ['.month-summary'], key: 'tourTotal' },
+  { targets: ['#date-field-btn'], key: 'tourDate' },
+  { targets: ['#add-rows .add-row'], key: 'tourRow' },
+  { targets: ['.add-actions'], key: 'tourSave' },
+  { targets: ['.list-header'], key: 'tourList' },
+  { targets: ['#tab-reports'], key: 'tourReports' },
+  // The menu button is hidden on desktop, where the settings rail is always visible.
+  { targets: ['#sidebar-open-btn', '#sidebar'], key: 'tourMenu' },
+  { targets: [], key: 'tourFinish' },
 ];
 const TOUR_GAP = 12;
 const TOUR_PAD = 6;
 
 let onboardingActive = false;
+
+function tourTarget(step) {
+  return step.targets
+    .map((selector) => document.querySelector(selector))
+    .find((el) => el && el.getClientRects().length > 0) || null;
+}
 let tourIndex = 0;
 
 function startOnboarding() {
@@ -679,7 +696,7 @@ function showTourStep() {
   document.getElementById('tour-back').hidden = tourIndex === 0;
   document.getElementById('tour-next').textContent = isLast ? t('tourDone') : t('tourNext');
 
-  const target = step.target && document.querySelector(step.target);
+  const target = tourTarget(step);
   if (target) target.scrollIntoView({ block: 'center' });
   positionTour();
   document.getElementById('tour-next').focus();
@@ -690,7 +707,7 @@ function positionTour() {
   const step = TOUR_STEPS[tourIndex];
   const spotlight = document.getElementById('tour-spotlight');
   const tooltip = document.getElementById('tour-tooltip');
-  const target = step.target && document.querySelector(step.target);
+  const target = tourTarget(step);
   const vw = window.innerWidth;
   const vh = window.innerHeight;
   const tipW = tooltip.offsetWidth;
@@ -712,13 +729,18 @@ function positionTour() {
   spotlight.style.height = `${rect.height + TOUR_PAD * 2}px`;
 
   const centered = rect.left + rect.width / 2 - tipW / 2;
-  tooltip.style.left = `${Math.min(Math.max(16, centered), vw - tipW - 16)}px`;
   const below = rect.bottom + TOUR_PAD + TOUR_GAP;
   const above = rect.top - TOUR_PAD - TOUR_GAP - tipH;
+  const beside = rect.right + TOUR_PAD + TOUR_GAP;
+  let left = Math.min(Math.max(16, centered), vw - tipW - 16);
   let top;
   if (below + tipH <= vh - 16) top = below;
   else if (above >= 16) top = above;
-  else top = vh - tipH - 16;
+  else if (beside + tipW <= vw - 16) {
+    left = beside;
+    top = Math.min(Math.max(16, rect.top), vh - tipH - 16);
+  } else top = vh - tipH - 16;
+  tooltip.style.left = `${left}px`;
   tooltip.style.top = `${top}px`;
 }
 
@@ -754,9 +776,12 @@ function createRow() {
   row.className = 'add-row';
   row.innerHTML = `
     <select class="row-store" aria-label="${escapeHtml(t('storeSelectBlank'))}"></select>
-    <button type="button" class="row-add-store" aria-label="${escapeHtml(t('addStoreButtonLabel'))}">+</button>
-    <input type="number" class="row-amount" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" aria-label="${escapeHtml(t('amountAria'))}">
-    <button type="button" class="row-remove" aria-label="${escapeHtml(t('rowRemoveAria'))}">×</button>
+    <button type="button" class="row-add-store" aria-label="${escapeHtml(t('addStoreButtonLabel'))}" title="${escapeHtml(t('addStoreButtonLabel'))}">+</button>
+    <label class="amount-field">
+      <span class="amount-prefix" aria-hidden="true">$</span>
+      <input type="number" class="row-amount" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" aria-label="${escapeHtml(t('amountAria'))}">
+    </label>
+    <button type="button" class="row-remove" aria-label="${escapeHtml(t('rowRemoveAria'))}" title="${escapeHtml(t('rowRemoveAria'))}">×</button>
   `;
 
   populateStoreOptions(row.querySelector('.row-store'));
@@ -863,6 +888,9 @@ function switchTab(tabName) {
   document.getElementById('reports-screen').hidden = isAdd;
   document.getElementById('tab-add').classList.toggle('selected', isAdd);
   document.getElementById('tab-reports').classList.toggle('selected', !isAdd);
+  const title = document.getElementById('page-title');
+  title.dataset.i18n = isAdd ? 'appTitle' : 'tabReports';
+  title.textContent = t(title.dataset.i18n);
 }
 
 function setupTabs() {
@@ -957,44 +985,37 @@ function computeYearEntries(year) {
 }
 
 function renderFolderBreakdownBlock(container, listForTotals) {
-  const folders = allFolders();
+  const grandTotal = listForTotals.reduce((sum, e) => sum + e.amount, 0);
+  const cards = document.createElement('div');
+  cards.className = 'folder-cards';
 
-  const totalsRow = document.createElement('div');
-  totalsRow.className = 'folder-totals-row';
-  totalsRow.style.gridTemplateColumns = `repeat(${folders.length}, 1fr)`;
-
-  const breakdownsRow = document.createElement('div');
-  breakdownsRow.className = 'folder-breakdowns-row';
-  breakdownsRow.style.gridTemplateColumns = `repeat(${folders.length}, 1fr)`;
-
-  folders.forEach((folder) => {
+  allFolders().forEach((folder) => {
     const folderEntries = computeFolderEntries(listForTotals, folder);
     const folderTotal = folderEntries.reduce((sum, e) => sum + e.amount, 0);
-
-    const totalCard = document.createElement('div');
-    totalCard.className = 'folder-total-card';
-    totalCard.innerHTML = `
-      <span class="folder-total-name">${escapeHtml(folderLabel(folder))}</span>
-      <span class="folder-total-amount gradient-text">${formatAmount(folderTotal)}</span>
-    `;
-    totalsRow.appendChild(totalCard);
-
+    const share = grandTotal > 0 ? Math.round((folderTotal / grandTotal) * 100) : 0;
     const breakdown = computeBreakdown(folderEntries);
+
     const card = document.createElement('div');
     card.className = 'folder-report-card';
     card.innerHTML = `
-      <div class="folder-report-header">${escapeHtml(folderLabel(folder))}</div>
+      <div class="folder-report-head">
+        <span class="folder-report-name">${escapeHtml(folderLabel(folder))}</span>
+        <span class="folder-report-total">${formatAmount(folderTotal)}</span>
+      </div>
+      <div class="folder-share">
+        <div class="folder-share-bar"><span style="width: ${share}%"></span></div>
+        <span>${share}%</span>
+      </div>
       <div class="folder-report-breakdown">${
         breakdown.length === 0
-          ? `<p class="report-line">${escapeHtml(t('reportNoData'))}</p>`
+          ? `<p class="report-line muted">${escapeHtml(t('reportNoData'))}</p>`
           : breakdown.map((b) => `<div class="report-line"><span>${escapeHtml(b.store)}</span><span>${formatAmount(b.amount)}</span></div>`).join('')
       }</div>
     `;
-    breakdownsRow.appendChild(card);
+    cards.appendChild(card);
   });
 
-  container.appendChild(totalsRow);
-  container.appendChild(breakdownsRow);
+  container.appendChild(cards);
 }
 
 function renderMonthOrYearReport() {
@@ -1106,7 +1127,7 @@ function renderPeriodReport() {
   const total = matches.reduce((sum, e) => sum + e.amount, 0);
 
   if (matches.length === 0) {
-    content.innerHTML = `<p class="report-grand-total">${t('reportTotalLabel')} <span class="gradient-text">${formatAmount(total)}</span></p><p class="report-line">${escapeHtml(t('reportNoDataPeriod'))}</p>`;
+    content.innerHTML = `<p class="report-grand-total">${t('reportTotalLabel')} <span class="gradient-text">${formatAmount(total)}</span></p><p class="report-empty">${escapeHtml(t('reportNoDataPeriod'))}</p>`;
     return;
   }
 
