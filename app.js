@@ -39,7 +39,7 @@ function startDataSubscriptions() {
     if (!snap.exists()) {
       setDoc(profileRef, {
         customFolders: [], storesByFolder: {}, removedDefaultStores: {},
-        language: 'en', theme: 'light',
+        language: 'en', theme: 'light', onboardingDone: false,
       }, { merge: true }).catch((err) => console.error('[profile] init failed:', err));
       return;
     }
@@ -50,6 +50,7 @@ function startDataSubscriptions() {
       removedDefaultStores: data.removedDefaultStores || {},
       language: data.language || 'en',
       theme: data.theme || 'light',
+      onboardingDone: data.onboardingDone,
     };
     if (!allFolders().includes(selectedFolder)) selectedFolder = FIXED_FOLDERS[0];
     applyTranslations();
@@ -59,12 +60,15 @@ function startDataSubscriptions() {
     render();
     if (!document.getElementById('manage-stores-screen').hidden) renderManageStores();
     if (!document.getElementById('reports-screen').hidden) renderReports();
+    // Only profiles created after onboarding shipped carry `false`; older accounts skip the tour.
+    if (data.onboardingDone === false) startOnboarding();
   }, (err) => console.error('[profile] subscription failed:', err));
 }
 
 function stopDataSubscriptions() {
   if (entriesUnsub) { entriesUnsub(); entriesUnsub = null; }
   if (profileUnsub) { profileUnsub(); profileUnsub = null; }
+  finishOnboarding();
   entries = [];
   profileData = { customFolders: [], storesByFolder: {}, removedDefaultStores: {}, language: 'en', theme: 'light' };
   selectedFolder = FIXED_FOLDERS[0];
@@ -153,6 +157,7 @@ function storesForFolder(folder) {
 }
 
 function saveProfileFields(fields) {
+  if (!currentUser) return;
   updateDoc(doc(db, 'users', currentUser.uid), fields).catch((err) => console.error('[profile] update failed:', err));
 }
 
@@ -581,17 +586,7 @@ function setupSidebar() {
   document.getElementById('sidebar-backdrop').addEventListener('click', closeSidebar);
 
   document.querySelectorAll('.sidebar-option-btn[data-lang]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const lang = btn.dataset.lang;
-      profileData = { ...profileData, language: lang };
-      applyTranslations();
-      renderFolderTabs();
-      refreshAllStoreSelects();
-      render();
-      if (!document.getElementById('reports-screen').hidden) renderReports();
-      updateSidebarSelection();
-      saveProfileFields({ language: lang });
-    });
+    btn.addEventListener('click', () => setLanguage(btn.dataset.lang));
   });
 
   document.querySelectorAll('.sidebar-option-btn[data-theme-choice]').forEach((btn) => {
@@ -609,6 +604,149 @@ function setupSidebar() {
     switchTab('add');
     openManageStores();
   });
+
+  document.getElementById('sidebar-tour-btn').addEventListener('click', () => {
+    closeSidebar();
+    startOnboarding();
+  });
+}
+
+function setLanguage(lang) {
+  profileData = { ...profileData, language: lang };
+  applyTranslations();
+  renderFolderTabs();
+  refreshAllStoreSelects();
+  render();
+  if (!document.getElementById('reports-screen').hidden) renderReports();
+  updateSidebarSelection();
+  saveProfileFields({ language: lang });
+}
+
+// Onboarding: an English language picker, then a spotlight tour over the add screen.
+const TOUR_STEPS = [
+  { target: '#folder-tabs', key: 'tourFolders' },
+  { target: '.monthly-total-label', key: 'tourTotal' },
+  { target: '#date-field-btn', key: 'tourDate' },
+  { target: '#add-rows .add-row', key: 'tourRow' },
+  { target: '.add-actions', key: 'tourSave' },
+  { target: '.list-header', key: 'tourList' },
+  { target: '#tab-reports', key: 'tourReports' },
+  { target: '#sidebar-open-btn', key: 'tourMenu' },
+  { target: null, key: 'tourFinish' },
+];
+const TOUR_GAP = 12;
+const TOUR_PAD = 6;
+
+let onboardingActive = false;
+let tourIndex = 0;
+
+function startOnboarding() {
+  if (onboardingActive) return;
+  onboardingActive = true;
+  switchTab('add');
+  document.getElementById('onboarding-lang').hidden = false;
+  document.querySelector('.onboarding-lang-btn').focus();
+}
+
+function startTour() {
+  document.getElementById('onboarding-lang').hidden = true;
+  document.getElementById('tour').hidden = false;
+  tourIndex = 0;
+  showTourStep();
+}
+
+function finishOnboarding() {
+  document.getElementById('onboarding-lang').hidden = true;
+  document.getElementById('tour').hidden = true;
+  if (!onboardingActive) return;
+  onboardingActive = false;
+  if (currentUser && profileData.onboardingDone !== true) {
+    profileData = { ...profileData, onboardingDone: true };
+    saveProfileFields({ onboardingDone: true });
+  }
+}
+
+function showTourStep() {
+  const step = TOUR_STEPS[tourIndex];
+  const isLast = tourIndex === TOUR_STEPS.length - 1;
+  document.getElementById('tour-progress').textContent = t('tourProgress')
+    .replace('{n}', tourIndex + 1).replace('{total}', TOUR_STEPS.length);
+  document.getElementById('tour-title').textContent = t(`${step.key}Title`);
+  document.getElementById('tour-text').textContent = t(`${step.key}Text`);
+  document.getElementById('tour-skip').textContent = t('tourSkip');
+  document.getElementById('tour-skip').hidden = isLast;
+  document.getElementById('tour-back').textContent = t('tourBack');
+  document.getElementById('tour-back').hidden = tourIndex === 0;
+  document.getElementById('tour-next').textContent = isLast ? t('tourDone') : t('tourNext');
+
+  const target = step.target && document.querySelector(step.target);
+  if (target) target.scrollIntoView({ block: 'center' });
+  positionTour();
+  document.getElementById('tour-next').focus();
+}
+
+function positionTour() {
+  if (document.getElementById('tour').hidden) return;
+  const step = TOUR_STEPS[tourIndex];
+  const spotlight = document.getElementById('tour-spotlight');
+  const tooltip = document.getElementById('tour-tooltip');
+  const target = step.target && document.querySelector(step.target);
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const tipW = tooltip.offsetWidth;
+  const tipH = tooltip.offsetHeight;
+
+  if (!target) {
+    spotlight.classList.add('no-target');
+    spotlight.removeAttribute('style');
+    tooltip.style.left = `${(vw - tipW) / 2}px`;
+    tooltip.style.top = `${(vh - tipH) / 2}px`;
+    return;
+  }
+
+  const rect = target.getBoundingClientRect();
+  spotlight.classList.remove('no-target');
+  spotlight.style.top = `${rect.top - TOUR_PAD}px`;
+  spotlight.style.left = `${rect.left - TOUR_PAD}px`;
+  spotlight.style.width = `${rect.width + TOUR_PAD * 2}px`;
+  spotlight.style.height = `${rect.height + TOUR_PAD * 2}px`;
+
+  const centered = rect.left + rect.width / 2 - tipW / 2;
+  tooltip.style.left = `${Math.min(Math.max(16, centered), vw - tipW - 16)}px`;
+  const below = rect.bottom + TOUR_PAD + TOUR_GAP;
+  const above = rect.top - TOUR_PAD - TOUR_GAP - tipH;
+  let top;
+  if (below + tipH <= vh - 16) top = below;
+  else if (above >= 16) top = above;
+  else top = vh - tipH - 16;
+  tooltip.style.top = `${top}px`;
+}
+
+function setupOnboarding() {
+  document.querySelectorAll('.onboarding-lang-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      setLanguage(btn.dataset.lang);
+      startTour();
+    });
+  });
+
+  document.getElementById('tour-next').addEventListener('click', () => {
+    if (tourIndex === TOUR_STEPS.length - 1) { finishOnboarding(); return; }
+    tourIndex += 1;
+    showTourStep();
+  });
+  document.getElementById('tour-back').addEventListener('click', () => {
+    if (tourIndex === 0) return;
+    tourIndex -= 1;
+    showTourStep();
+  });
+  document.getElementById('tour-skip').addEventListener('click', finishOnboarding);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !document.getElementById('tour').hidden) finishOnboarding();
+  });
+  window.addEventListener('resize', positionTour);
+  window.addEventListener('scroll', positionTour, { passive: true });
 }
 
 function createRow() {
@@ -1014,6 +1152,7 @@ document.addEventListener('DOMContentLoaded', () => {
   runSetup('setupFolderTabs', setupFolderTabs);
   runSetup('setupManageStores', setupManageStores);
   runSetup('setupSidebar', setupSidebar);
+  runSetup('setupOnboarding', setupOnboarding);
   runSetup('setupAddForm', setupAddForm);
   runSetup('setupSortToggle', setupSortToggle);
   runSetup('setupReports', setupReports);

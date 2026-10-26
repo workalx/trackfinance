@@ -7,7 +7,7 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0f172a">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=13">
+  <link rel="stylesheet" href="styles.css?v=14">
 </head>
 <body>
   <section id="login-screen">
@@ -52,6 +52,7 @@
     <hr class="sidebar-divider">
 
     <button type="button" id="sidebar-manage-stores-btn" class="link-btn" data-i18n="manageStoresLink">Керувати магазинами</button>
+    <button type="button" id="sidebar-tour-btn" class="link-btn" data-i18n="sidebarTourButton">Показати інструктаж знову</button>
   </aside>
 
   <main hidden>
@@ -135,7 +136,33 @@
     <button type="button" id="tab-reports" class="tab-btn" data-i18n="tabReports">Звіти</button>
   </nav>
 
-  <script type="module" src="app.js?v=14"></script>
+  <div id="onboarding-lang" class="onboarding-overlay" hidden>
+    <div class="onboarding-card" role="dialog" aria-modal="true" aria-labelledby="onboarding-lang-title">
+      <h2 id="onboarding-lang-title" class="gradient-text">Welcome to TrackFinance!</h2>
+      <p>Choose the language for a short tutorial.</p>
+      <div class="onboarding-lang-options">
+        <button type="button" class="onboarding-lang-btn" data-lang="uk">Українська</button>
+        <button type="button" class="onboarding-lang-btn" data-lang="en">English</button>
+        <button type="button" class="onboarding-lang-btn" data-lang="ru">Русский</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="tour" hidden>
+    <div id="tour-spotlight"></div>
+    <div id="tour-tooltip" role="dialog" aria-modal="true" aria-labelledby="tour-title">
+      <p id="tour-progress" class="tour-progress"></p>
+      <h3 id="tour-title"></h3>
+      <p id="tour-text"></p>
+      <div class="tour-actions">
+        <button type="button" id="tour-skip" class="tour-skip"></button>
+        <button type="button" id="tour-back"></button>
+        <button type="button" id="tour-next"></button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="app.js?v=15"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
