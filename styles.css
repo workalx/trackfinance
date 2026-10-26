@@ -644,20 +644,28 @@ main { padding: 1rem; }
   padding: 1rem 1.125rem;
 }
 
-.folder-report-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 0.75rem;
+.folder-report-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.folder-report-table th {
+  padding: 0;
+  vertical-align: baseline;
+  text-align: left;
 }
 
 .folder-report-name { font-weight: 600; }
 
-.folder-report-total {
+.folder-report-table .folder-report-total {
+  text-align: right;
+  white-space: nowrap;
   font-size: 1.25rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
+
+.folder-share-row td { padding: 0; }
 
 .folder-share {
   display: flex;
@@ -684,20 +692,26 @@ main { padding: 1rem; }
   background: var(--accent);
 }
 
-.report-line {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.75rem;
+.report-line td {
   padding: 0.4375rem 0;
   border-top: 1px solid var(--line);
   font-size: 0.875rem;
 }
 
-.report-line span:last-child { font-variant-numeric: tabular-nums; font-weight: 500; }
+.report-line td + td {
+  padding-left: 0.75rem;
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
 
-.report-line.muted { color: var(--text-muted); }
+.report-line.muted td { color: var(--text-muted); }
 
 .period-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -705,18 +719,15 @@ main { padding: 1rem; }
   overflow: hidden;
 }
 
-.period-row {
-  display: grid;
-  grid-template-columns: 1.3fr 1fr 1fr 0.8fr;
-  gap: 0.5rem;
+.period-table th,
+.period-table td {
   padding: 0.625rem 1rem;
   border-top: 1px solid var(--line);
   font-size: 0.875rem;
+  text-align: left;
 }
 
-.period-row span:last-child { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
-
-.period-header {
+.period-table th {
   border-top: none;
   background: var(--surface-2);
   color: var(--text-muted);
@@ -724,7 +735,21 @@ main { padding: 1rem; }
   font-weight: 600;
 }
 
-.period-header span:last-child { font-weight: 600; }
+.period-table th:last-child,
+.period-table td:last-child {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.period-table td:last-child { font-weight: 600; }
+
+@media (max-width: 479px) {
+  .period-table { table-layout: fixed; }
+  .period-table th, .period-table td { padding: 0.5rem 0.375rem; font-size: 0.75rem; overflow-wrap: anywhere; }
+  .period-table th:first-child, .period-table td:first-child { padding-left: 0.625rem; width: 27%; }
+  .period-table th:last-child, .period-table td:last-child { padding-right: 0.625rem; width: 25%; }
+}
 
 .report-empty {
   margin: 0;
@@ -1308,6 +1333,14 @@ main { padding: 1rem; }
   main { max-width: none; padding: 0; }
   #reports-screen, #report-content { display: block !important; }
   .report-grand-total { background: none; color: #1d1b2c; border: 2px solid #1d1b2c; }
-  .folder-report-card, .period-table { box-shadow: none; break-inside: avoid; }
-  .folder-cards { grid-template-columns: repeat(2, 1fr); }
+  /* Short cards move whole to the next page; long lists split and repeat their <thead> header. */
+  .report-grand-total { padding: 0.75rem 1rem; margin-bottom: 0.75rem; }
+  .folder-cards { display: block; }
+  .folder-report-card { box-shadow: none; margin-bottom: 0.625rem; padding: 0.625rem 0.875rem; }
+  .folder-share { margin: 0.375rem 0 0.5rem; }
+  .report-line td { padding: 0.25rem 0; font-size: 0.8125rem; }
+  .period-table { box-shadow: none; border-radius: 0; overflow: visible; }
+  .period-table th, .period-table td { padding: 0.3rem 0.75rem; font-size: 0.8125rem; }
+  thead { display: table-header-group; }
+  tr { break-inside: avoid; }
 }

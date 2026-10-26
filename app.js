@@ -995,22 +995,33 @@ function renderFolderBreakdownBlock(container, listForTotals) {
     const share = grandTotal > 0 ? Math.round((folderTotal / grandTotal) * 100) : 0;
     const breakdown = computeBreakdown(folderEntries);
 
+    // A table so the folder name and total repeat on every printed page the list continues onto.
     const card = document.createElement('div');
     card.className = 'folder-report-card';
     card.innerHTML = `
-      <div class="folder-report-head">
-        <span class="folder-report-name">${escapeHtml(folderLabel(folder))}</span>
-        <span class="folder-report-total">${formatAmount(folderTotal)}</span>
-      </div>
-      <div class="folder-share">
-        <div class="folder-share-bar"><span style="width: ${share}%"></span></div>
-        <span>${share}%</span>
-      </div>
-      <div class="folder-report-breakdown">${
-        breakdown.length === 0
-          ? `<p class="report-line muted">${escapeHtml(t('reportNoData'))}</p>`
-          : breakdown.map((b) => `<div class="report-line"><span>${escapeHtml(b.store)}</span><span>${formatAmount(b.amount)}</span></div>`).join('')
-      }</div>
+      <table class="folder-report-table">
+        <thead>
+          <tr>
+            <th class="folder-report-name">${escapeHtml(folderLabel(folder))}</th>
+            <th class="folder-report-total">${formatAmount(folderTotal)}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="folder-share-row">
+            <td colspan="2">
+              <div class="folder-share">
+                <div class="folder-share-bar"><span style="width: ${share}%"></span></div>
+                <span>${share}%</span>
+              </div>
+            </td>
+          </tr>
+          ${
+            breakdown.length === 0
+              ? `<tr class="report-line muted"><td colspan="2">${escapeHtml(t('reportNoData'))}</td></tr>`
+              : breakdown.map((b) => `<tr class="report-line"><td>${escapeHtml(b.store)}</td><td>${formatAmount(b.amount)}</td></tr>`).join('')
+          }
+        </tbody>
+      </table>
     `;
     cards.appendChild(card);
   });
@@ -1133,22 +1144,25 @@ function renderPeriodReport() {
 
   const lang = profileData.language || 'en';
   const rows = matches.map((e) => `
-    <div class="period-row">
-      <span>${e.day} ${MONTH_NAMES[lang][e.month - 1]} ${e.year}</span>
-      <span>${escapeHtml(folderLabel(e.folder))}</span>
-      <span>${escapeHtml(e.store)}</span>
-      <span>${formatAmount(e.amount)}</span>
-    </div>
+    <tr>
+      <td>${e.day} ${MONTH_NAMES[lang][e.month - 1]} ${e.year}</td>
+      <td>${escapeHtml(folderLabel(e.folder))}</td>
+      <td>${escapeHtml(e.store)}</td>
+      <td>${formatAmount(e.amount)}</td>
+    </tr>
   `).join('');
 
+  // A real <thead> is repeated by the browser on every printed page of a long table.
   content.innerHTML = `
     <p class="report-grand-total">${t('reportTotalLabel')} <span class="gradient-text">${formatAmount(total)}</span></p>
-    <div class="period-table">
-      <div class="period-row period-header">
-        <span>${escapeHtml(t('periodColDate'))}</span><span>${escapeHtml(t('periodColFolder'))}</span><span>${escapeHtml(t('periodColStore'))}</span><span>${escapeHtml(t('periodColAmount'))}</span>
-      </div>
-      ${rows}
-    </div>
+    <table class="period-table">
+      <thead>
+        <tr>
+          <th>${escapeHtml(t('periodColDate'))}</th><th>${escapeHtml(t('periodColFolder'))}</th><th>${escapeHtml(t('periodColStore'))}</th><th>${escapeHtml(t('periodColAmount'))}</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
   `;
 }
 
