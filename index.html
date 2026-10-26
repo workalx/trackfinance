@@ -5,14 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Мої витрати</title>
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0f172a">
+  <meta name="theme-color" content="#5b45e0">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=13">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="styles.css?v=16">
 </head>
 <body>
   <section id="login-screen">
     <div class="login-card">
-      <h1 class="gradient-text">TrackFinance</h1>
+      <p class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="28" height="28"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 8h6M9 12h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </p>
+      <h1>TrackFinance</h1>
       <p data-i18n="loginSubtitle">Увійдіть, щоб побачити свої витрати.</p>
       <button type="button" id="google-signin-btn" data-i18n="signInButton">Увійти через Google</button>
       <p id="login-error" class="login-error" hidden></p>
@@ -20,16 +26,19 @@
   </section>
 
   <header class="app-header" id="app-header" hidden>
-    <button type="button" id="sidebar-open-btn" data-i18n-aria-label="sidebarOpenAria" aria-label="Відкрити меню">☰</button>
-    <h1 data-i18n="appTitle">Мої витрати</h1>
-    <button type="button" id="sign-out-btn" class="link-btn" hidden data-i18n="signOutButton">Вийти</button>
+    <button type="button" id="sidebar-open-btn" class="icon-btn" data-i18n-aria-label="sidebarOpenAria" aria-label="Відкрити меню">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <h1 id="page-title" data-i18n="appTitle">Мої витрати</h1>
   </header>
 
   <div id="sidebar-backdrop" hidden></div>
   <aside id="sidebar" hidden>
     <div class="sidebar-header">
       <h2 data-i18n="sidebarTitle">Налаштування</h2>
-      <button type="button" id="sidebar-close-btn" data-i18n-aria-label="sidebarCloseAria" aria-label="Закрити меню">×</button>
+      <button type="button" id="sidebar-close-btn" class="icon-btn" data-i18n-aria-label="sidebarCloseAria" aria-label="Закрити меню">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
     </div>
 
     <div class="sidebar-section">
@@ -49,54 +58,82 @@
       </div>
     </div>
 
-    <hr class="sidebar-divider">
+    <div class="sidebar-links">
+      <button type="button" id="sidebar-manage-stores-btn" class="sidebar-link" data-i18n="manageStoresLink">Керувати магазинами</button>
+      <button type="button" id="sidebar-tour-btn" class="sidebar-link" data-i18n="sidebarTourButton">Показати інструктаж знову</button>
+    </div>
 
-    <button type="button" id="sidebar-manage-stores-btn" class="link-btn" data-i18n="manageStoresLink">Керувати магазинами</button>
+    <button type="button" id="sign-out-btn" class="sidebar-signout" hidden data-i18n="signOutButton">Вийти</button>
   </aside>
 
   <main hidden>
     <section id="add-screen">
       <div id="folder-tabs" class="folder-tabs"></div>
 
-      <p class="monthly-total-label"><span data-i18n="monthlyTotalPrefix">Всього за</span> <span id="month-name"></span>: <span id="monthly-total" class="gradient-text">$0.00</span></p>
+      <div class="add-layout">
+        <section class="panel entry-form" aria-labelledby="entry-form-title">
+          <h2 id="entry-form-title" class="panel-title" data-i18n="newExpenseTitle">Нова витрата</h2>
 
-      <button type="button" id="date-field-btn" class="date-field">
-        <span id="date-field-label">Сьогодні</span>
-        <span class="date-field-chevron" aria-hidden="true">▾</span>
-      </button>
+          <p class="field-label" data-i18n="dateLabel">Дата</p>
+          <button type="button" id="date-field-btn" class="date-field">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4 10h16M9 3v4M15 3v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <span id="date-field-label">Сьогодні</span>
+            <span class="date-field-chevron" aria-hidden="true">▾</span>
+          </button>
 
-      <div id="add-rows"></div>
+          <div class="add-rows-head" aria-hidden="true">
+            <span data-i18n="periodColStore">Магазин</span>
+            <span data-i18n="periodColAmount">Сума</span>
+          </div>
+          <div id="add-rows"></div>
 
-      <div class="add-actions">
-        <button type="button" id="add-row-btn" data-i18n="addRowButton">+ Додати рядок</button>
-        <button type="button" id="save-all-btn" disabled data-i18n="saveAllButton">Зберегти все</button>
+          <div class="add-actions">
+            <button type="button" id="add-row-btn" data-i18n="addRowButton">+ Додати рядок</button>
+            <button type="button" id="save-all-btn" disabled data-i18n="saveAllButton">Зберегти все</button>
+          </div>
+        </section>
+
+        <section class="receipt" aria-labelledby="receipt-title">
+          <div class="month-summary">
+            <p class="month-summary-folder" id="summary-folder"></p>
+            <p class="monthly-total-label"><span data-i18n="monthlyTotalPrefix">Всього за</span> <span id="month-name"></span></p>
+            <p id="monthly-total" class="monthly-total">$0.00</p>
+          </div>
+
+          <div class="list-header">
+            <h2 id="receipt-title" data-i18n="listHeaderTitle">Мої витрати</h2>
+            <button type="button" id="sort-toggle-btn" data-i18n="sortByDate">За датою</button>
+          </div>
+          <div id="entries-list" aria-live="polite"></div>
+          <div id="empty-state" class="empty-state" hidden>
+            <p class="empty-state-title" data-i18n="emptyState">У цій папці ще немає витрат</p>
+            <p class="empty-state-hint" data-i18n="emptyStateHint">Додайте першу витрату у формі «Нова витрата».</p>
+          </div>
+        </section>
       </div>
-
-      <div class="list-header">
-        <h2 data-i18n="listHeaderTitle">Мої витрати</h2>
-        <button type="button" id="sort-toggle-btn" data-i18n="sortByDate">За датою</button>
-      </div>
-      <section id="entries-list" aria-live="polite"></section>
-      <p id="empty-state" hidden data-i18n="emptyState">Поки немає витрат.</p>
     </section>
 
     <section id="manage-stores-screen" hidden>
       <div class="screen-header">
-        <button type="button" id="manage-stores-back" data-i18n-aria-label="manageStoresBackAria" aria-label="Назад">‹</button>
+        <button type="button" id="manage-stores-back" class="icon-btn" data-i18n-aria-label="manageStoresBackAria" aria-label="Назад">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
         <h2 id="manage-stores-title">Магазини</h2>
       </div>
-      <div id="manage-stores-list"></div>
-      <button type="button" id="manage-stores-add-btn" class="link-btn" data-i18n="addStoreButtonLabel">Додати магазин</button>
-      <p id="manage-stores-empty" hidden data-i18n="manageStoresEmpty">Немає магазинів у цій папці.</p>
+      <div class="panel manage-stores-panel">
+        <div id="manage-stores-list"></div>
+        <p id="manage-stores-empty" class="empty-state-hint" hidden data-i18n="manageStoresEmpty">Немає магазинів у цій папці.</p>
+        <button type="button" id="manage-stores-add-btn" class="dashed-btn" data-i18n="addStoreButtonLabel">Додати магазин</button>
+      </div>
     </section>
 
     <div id="calendar-backdrop" class="calendar-backdrop" hidden>
       <div id="calendar-sheet" class="calendar-sheet" role="dialog" aria-modal="true" data-i18n-aria-label="calendarAriaLabel" aria-label="Оберіть дату">
         <div class="calendar-handle"></div>
         <div class="calendar-header">
-          <button type="button" id="cal-prev" data-i18n-aria-label="calendarPrevMonthAria" aria-label="Попередній місяць">‹</button>
+          <button type="button" id="cal-prev" class="icon-btn" data-i18n-aria-label="calendarPrevMonthAria" aria-label="Попередній місяць">‹</button>
           <span id="cal-month-label"></span>
-          <button type="button" id="cal-next" data-i18n-aria-label="calendarNextMonthAria" aria-label="Наступний місяць">›</button>
+          <button type="button" id="cal-next" class="icon-btn" data-i18n-aria-label="calendarNextMonthAria" aria-label="Наступний місяць">›</button>
         </div>
         <div class="calendar-weekdays">
           <span data-i18n="weekdayMon">Пн</span><span data-i18n="weekdayTue">Вт</span><span data-i18n="weekdayWed">Ср</span><span data-i18n="weekdayThu">Чт</span><span data-i18n="weekdayFri">Пт</span><span data-i18n="weekdaySat">Сб</span><span data-i18n="weekdaySun">Нд</span>
@@ -107,35 +144,77 @@
     </div>
 
     <section id="reports-screen" hidden>
-      <div class="report-mode-switch">
-        <button type="button" class="report-mode-btn selected" data-mode="month" data-i18n="reportModeMonth">Місяць</button>
-        <button type="button" class="report-mode-btn" data-mode="year" data-i18n="reportModeYear">Рік</button>
-        <button type="button" class="report-mode-btn" data-mode="period" data-i18n="reportModePeriod">Період</button>
-      </div>
+      <div class="report-toolbar">
+        <div class="report-mode-switch" role="group">
+          <button type="button" class="report-mode-btn selected" data-mode="month" data-i18n="reportModeMonth">Місяць</button>
+          <button type="button" class="report-mode-btn" data-mode="year" data-i18n="reportModeYear">Рік</button>
+          <button type="button" class="report-mode-btn" data-mode="period" data-i18n="reportModePeriod">Період</button>
+        </div>
 
-      <div id="report-nav" class="report-nav">
-        <button type="button" id="report-prev" data-i18n-aria-label="reportPrevPeriodAria" aria-label="Попередній період">‹</button>
-        <span id="report-period-label"></span>
-        <button type="button" id="report-next" data-i18n-aria-label="reportNextPeriodAria" aria-label="Наступний період">›</button>
-      </div>
+        <div id="report-nav" class="report-nav">
+          <button type="button" id="report-prev" class="icon-btn" data-i18n-aria-label="reportPrevPeriodAria" aria-label="Попередній період">‹</button>
+          <span id="report-period-label"></span>
+          <button type="button" id="report-next" class="icon-btn" data-i18n-aria-label="reportNextPeriodAria" aria-label="Наступний період">›</button>
+        </div>
 
-      <div id="report-period-pickers" class="report-period-pickers" hidden>
-        <button type="button" id="period-from-btn" class="date-field"></button>
-        <button type="button" id="period-to-btn" class="date-field"></button>
-      </div>
+        <div id="report-period-pickers" class="report-period-pickers" hidden>
+          <button type="button" id="period-from-btn" class="date-field"></button>
+          <span class="period-dash" aria-hidden="true">–</span>
+          <button type="button" id="period-to-btn" class="date-field"></button>
+        </div>
 
-      <button type="button" id="print-btn" data-i18n="printButton">Друкувати</button>
+        <button type="button" id="print-btn" class="print-btn">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 9V4h10v5M7 17H5a1 1 0 0 1-1-1v-5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v5a1 1 0 0 1-1 1h-2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><rect x="7" y="14" width="10" height="6" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+          <span data-i18n="printButton">Друкувати</span>
+        </button>
+      </div>
 
       <div id="report-content"></div>
     </section>
   </main>
 
   <nav class="tab-bar" hidden>
-    <button type="button" id="tab-add" class="tab-btn selected" data-i18n="tabAdd">Додати</button>
-    <button type="button" id="tab-reports" class="tab-btn" data-i18n="tabReports">Звіти</button>
+    <p class="rail-brand">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 8h6M9 12h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      TrackFinance
+    </p>
+    <button type="button" id="tab-add" class="tab-btn selected">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span data-i18n="tabAdd">Додати</span>
+    </button>
+    <button type="button" id="tab-reports" class="tab-btn">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span data-i18n="tabReports">Звіти</span>
+    </button>
   </nav>
 
-  <script type="module" src="app.js?v=14"></script>
+  <div id="onboarding-lang" class="onboarding-overlay" hidden>
+    <div class="onboarding-card" role="dialog" aria-modal="true" aria-labelledby="onboarding-lang-title">
+      <h2 id="onboarding-lang-title">Welcome to TrackFinance!</h2>
+      <p>Choose the language for a short tutorial.</p>
+      <div class="onboarding-lang-options">
+        <button type="button" class="onboarding-lang-btn" data-lang="uk">Українська</button>
+        <button type="button" class="onboarding-lang-btn" data-lang="en">English</button>
+        <button type="button" class="onboarding-lang-btn" data-lang="ru">Русский</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="tour" hidden>
+    <div id="tour-spotlight"></div>
+    <div id="tour-tooltip" role="dialog" aria-modal="true" aria-labelledby="tour-title">
+      <p id="tour-progress" class="tour-progress"></p>
+      <h3 id="tour-title"></h3>
+      <p id="tour-text"></p>
+      <div class="tour-actions">
+        <button type="button" id="tour-skip" class="tour-skip"></button>
+        <button type="button" id="tour-back"></button>
+        <button type="button" id="tour-next"></button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="app.js?v=17"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
