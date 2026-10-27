@@ -1,0 +1,124 @@
+/* Privacy policy and terms pages: plain, readable, light and dark */
+:root {
+  --bg: #f3f2f8;
+  --surface: #ffffff;
+  --text: #1d1b2c;
+  --text-muted: #6b6880;
+  --accent: #5b45e0;
+  --line: #e3e1ec;
+  --todo-bg: #fff3c4;
+  --todo-ink: #6b4a00;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121119;
+    --surface: #1c1a26;
+    --text: #eceaf5;
+    --text-muted: #9d9ab2;
+    --accent: #9a8cff;
+    --line: #2e2b3b;
+    --todo-bg: #4a3a0a;
+    --todo-ink: #ffe08a;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Onest', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+a { color: var(--accent); }
+
+.legal-top,
+main,
+.legal-footer {
+  width: min(46rem, 100%);
+  margin: 0 auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.legal-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 1.25rem;
+  padding-bottom: 1.25rem;
+}
+
+.legal-brand { color: var(--text); font-weight: 700; font-size: 1.125rem; text-decoration: none; }
+
+.legal-lang {
+  display: flex;
+  gap: 0.125rem;
+  padding: 0.1875rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.legal-lang button {
+  min-height: 1.875rem;
+  padding: 0 0.625rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.legal-lang button[aria-pressed="true"] { background: var(--accent); color: var(--surface); }
+
+article {
+  padding: 2rem 1.5rem 2.25rem;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+h1 { margin: 0 0 0.25rem; font-size: clamp(1.75rem, 5vw, 2.25rem); line-height: 1.15; letter-spacing: -0.02em; }
+h2 { margin: 1.75rem 0 0.5rem; font-size: 1.125rem; }
+p, ul { margin: 0 0 0.75rem; }
+ul { padding-left: 1.25rem; }
+li { margin-bottom: 0.375rem; }
+
+.legal-date { color: var(--text-muted); font-size: 0.9375rem; margin-bottom: 1.25rem; }
+
+/* Text the owner still has to fill in */
+.legal-todo {
+  padding: 0.0625rem 0.375rem;
+  border-radius: 4px;
+  background: var(--todo-bg);
+  color: var(--todo-ink);
+  font-weight: 600;
+}
+
+.legal-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  padding-top: 1.5rem;
+  padding-bottom: 2.5rem;
+  font-size: 0.9375rem;
+}
+
+.legal-footer a { color: var(--text-muted); }
+
+@media print {
+  .legal-top nav, .legal-footer { display: none; }
+  article { border: none; padding: 0; }
+}

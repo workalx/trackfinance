@@ -10,21 +10,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&display=swap">
-  <link rel="stylesheet" href="styles.css?v=16">
+  <!-- Fonts for the selectable styles; browsers only download the faces a page actually uses -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Commissioner:wght@400;500;600;700&family=Geologica:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Manrope:wght@300;400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Unbounded:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="styles.css?v=34">
+  <link rel="stylesheet" href="themes.css?v=6">
 </head>
 <body>
-  <section id="login-screen">
-    <div class="login-card">
-      <p class="brand-mark" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="28" height="28"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 8h6M9 12h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-      </p>
-      <h1>TrackFinance</h1>
-      <p data-i18n="loginSubtitle">Увійдіть, щоб побачити свої витрати.</p>
-      <button type="button" id="google-signin-btn" data-i18n="signInButton">Увійти через Google</button>
-      <p id="login-error" class="login-error" hidden></p>
-    </div>
-  </section>
-
   <header class="app-header" id="app-header" hidden>
     <button type="button" id="sidebar-open-btn" class="icon-btn" data-i18n-aria-label="sidebarOpenAria" aria-label="Відкрити меню">
       <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
@@ -33,34 +24,29 @@
   </header>
 
   <div id="sidebar-backdrop" hidden></div>
+  <!-- Sidebar: the signed-in account and the sign-out button; every setting lives on the Settings screen -->
   <aside id="sidebar" hidden>
     <div class="sidebar-header">
-      <h2 data-i18n="sidebarTitle">Налаштування</h2>
+      <h2 data-i18n="sidebarAccountTitle">Акаунт</h2>
       <button type="button" id="sidebar-close-btn" class="icon-btn" data-i18n-aria-label="sidebarCloseAria" aria-label="Закрити меню">
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
       </button>
     </div>
 
-    <div class="sidebar-section">
-      <p class="sidebar-section-label" data-i18n="sidebarLanguageLabel">Мова</p>
-      <div class="sidebar-option-group">
-        <button type="button" class="sidebar-option-btn" data-lang="uk">Українська</button>
-        <button type="button" class="sidebar-option-btn" data-lang="en">English</button>
-        <button type="button" class="sidebar-option-btn" data-lang="ru">Русский</button>
+    <div class="sidebar-account" id="sidebar-account" hidden>
+      <button type="button" class="account-avatar-btn" id="account-avatar-btn" data-i18n-aria-label="accountPhotoChange" aria-label="Змінити фото">
+        <img class="account-avatar account-photo" id="account-photo" alt="" hidden referrerpolicy="no-referrer">
+        <span class="account-avatar" id="account-initial" aria-hidden="true"></span>
+        <span class="account-avatar-edit" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2" fill="none" stroke="currentColor" stroke-width="2"/></svg></span>
+      </button>
+      <div class="account-text">
+        <p class="account-name" id="account-name"></p>
+        <p class="account-email" id="account-email"></p>
+        <div class="account-photo-actions">
+          <button type="button" class="account-link" id="account-photo-change" data-i18n="accountPhotoAdd">Додати фото</button>
+          <button type="button" class="account-link account-link-muted" id="account-photo-remove" data-i18n="accountPhotoRemove" hidden>Прибрати фото</button>
+        </div>
       </div>
-    </div>
-
-    <div class="sidebar-section">
-      <p class="sidebar-section-label" data-i18n="sidebarThemeLabel">Тема</p>
-      <div class="sidebar-option-group">
-        <button type="button" class="sidebar-option-btn" data-theme-choice="light" data-i18n="themeLight">Світла</button>
-        <button type="button" class="sidebar-option-btn" data-theme-choice="dark" data-i18n="themeDark">Темна</button>
-      </div>
-    </div>
-
-    <div class="sidebar-links">
-      <button type="button" id="sidebar-manage-stores-btn" class="sidebar-link" data-i18n="manageStoresLink">Керувати магазинами</button>
-      <button type="button" id="sidebar-tour-btn" class="sidebar-link" data-i18n="sidebarTourButton">Показати інструктаж знову</button>
     </div>
 
     <button type="button" id="sign-out-btn" class="sidebar-signout" hidden data-i18n="signOutButton">Вийти</button>
@@ -98,11 +84,17 @@
             <p class="month-summary-folder" id="summary-folder"></p>
             <p class="monthly-total-label"><span data-i18n="monthlyTotalPrefix">Всього за</span> <span id="month-name"></span></p>
             <p id="monthly-total" class="monthly-total">$0.00</p>
+            <div id="budget-meter" hidden></div>
           </div>
 
           <div class="list-header">
             <h2 id="receipt-title" data-i18n="listHeaderTitle">Мої витрати</h2>
-            <button type="button" id="sort-toggle-btn" data-i18n="sortByDate">За датою</button>
+            <div class="list-header-actions">
+              <button type="button" id="list-search-btn" class="icon-btn list-search-btn" data-i18n-aria-label="listSearchAria" aria-label="Шукати витрати">
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              </button>
+              <button type="button" id="sort-toggle-btn" data-i18n="sortByDate">За датою</button>
+            </div>
           </div>
           <div id="entries-list" aria-live="polite"></div>
           <div id="empty-state" class="empty-state" hidden>
@@ -161,15 +153,162 @@
           <button type="button" id="period-from-btn" class="date-field"></button>
           <span class="period-dash" aria-hidden="true">–</span>
           <button type="button" id="period-to-btn" class="date-field"></button>
+          <button type="button" id="period-all-btn" class="period-all-btn" data-i18n="periodAllTime">Увесь час</button>
         </div>
 
+        <!-- Search and filters for the Period view -->
+        <div id="report-filters" class="report-filters" hidden>
+          <label class="filter-search">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <input type="search" id="filter-query" data-i18n-placeholder="filterQueryPlaceholder" data-i18n-aria-label="filterQueryAria" placeholder="Магазин або нотатка" aria-label="Пошук" autocomplete="off">
+          </label>
+          <select id="filter-folder" class="filter-input" data-i18n-aria-label="periodColFolder" aria-label="Папка"></select>
+          <input type="text" id="filter-min" class="filter-input" inputmode="decimal" data-i18n-placeholder="filterMin" data-i18n-aria-label="filterMin" placeholder="Сума від" aria-label="Сума від">
+          <input type="text" id="filter-max" class="filter-input" inputmode="decimal" data-i18n-placeholder="filterMax" data-i18n-aria-label="filterMaxAria" placeholder="до" aria-label="Сума до">
+          <button type="button" id="filter-reset" class="filter-reset" data-i18n="filterReset" hidden>Скинути</button>
+        </div>
+
+        <div class="report-actions">
+          <div class="export-wrap">
+            <button type="button" id="export-btn" class="print-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="export-menu">
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <span data-i18n="exportButton">Експорт</span>
+            </button>
+            <div id="export-menu" class="export-menu" role="menu" hidden>
+              <button type="button" role="menuitem" data-export="xlsx"><span class="export-badge">XLSX</span><span data-i18n="exportExcel">Excel</span></button>
+              <button type="button" role="menuitem" data-export="csv"><span class="export-badge">CSV</span><span data-i18n="exportCsv">Таблиця CSV</span></button>
+              <button type="button" role="menuitem" data-export="pdf"><span class="export-badge">PDF</span><span data-i18n="exportPdf">PDF через друк</span></button>
+            </div>
+          </div>
         <button type="button" id="print-btn" class="print-btn">
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 9V4h10v5M7 17H5a1 1 0 0 1-1-1v-5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v5a1 1 0 0 1-1 1h-2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><rect x="7" y="14" width="10" height="6" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
           <span data-i18n="printButton">Друкувати</span>
         </button>
+        </div>
       </div>
 
       <div id="report-content"></div>
+    </section>
+
+    <section id="settings-screen" hidden>
+      <div class="settings-grid">
+        <section class="panel settings-card" aria-labelledby="settings-lang-title">
+          <h2 id="settings-lang-title" class="panel-title" data-i18n="sidebarLanguageLabel">Мова</h2>
+          <div class="sidebar-option-group">
+            <button type="button" class="sidebar-option-btn" data-lang="uk">Українська</button>
+            <button type="button" class="sidebar-option-btn" data-lang="en">English</button>
+            <button type="button" class="sidebar-option-btn" data-lang="ru">Русский</button>
+          </div>
+        </section>
+
+        <section class="panel settings-card" aria-labelledby="settings-theme-title">
+          <h2 id="settings-theme-title" class="panel-title" data-i18n="sidebarThemeLabel">Тема</h2>
+          <div class="sidebar-option-group">
+            <button type="button" class="sidebar-option-btn" data-theme-choice="light" data-i18n="themeLight">Світла</button>
+            <button type="button" class="sidebar-option-btn" data-theme-choice="dark" data-i18n="themeDark">Темна</button>
+          </div>
+        </section>
+
+        <section class="panel settings-card settings-wide" aria-labelledby="settings-style-title">
+          <h2 id="settings-style-title" class="panel-title" data-i18n="sidebarStyleLabel">Стиль</h2>
+          <p class="settings-hint" data-i18n="settingsStyleHint">Стиль змінює кольори, шрифти й форму елементів у всьому застосунку.</p>
+          <div class="style-grid">
+            <button type="button" class="style-card" data-style-choice="classic">
+              <span class="style-swatch" aria-hidden="true"><span class="style-swatch-rail"></span><span class="style-swatch-body"><span class="style-swatch-ink"></span><span class="style-swatch-bar"></span></span></span>
+              <span class="style-name" data-i18n="styleClassic">Класичний</span>
+            </button>
+            <button type="button" class="style-card" data-style-choice="bank">
+              <span class="style-swatch" aria-hidden="true"><span class="style-swatch-rail"></span><span class="style-swatch-body"><span class="style-swatch-ink"></span><span class="style-swatch-bar"></span></span></span>
+              <span class="style-name" data-i18n="styleBank">Банківський</span>
+            </button>
+            <button type="button" class="style-card" data-style-choice="minimal">
+              <span class="style-swatch" aria-hidden="true"><span class="style-swatch-rail"></span><span class="style-swatch-body"><span class="style-swatch-ink"></span><span class="style-swatch-bar"></span></span></span>
+              <span class="style-name" data-i18n="styleMinimal">Мінімал</span>
+            </button>
+            <button type="button" class="style-card" data-style-choice="ledger">
+              <span class="style-swatch" aria-hidden="true"><span class="style-swatch-rail"></span><span class="style-swatch-body"><span class="style-swatch-ink"></span><span class="style-swatch-bar"></span></span></span>
+              <span class="style-name" data-i18n="styleLedger">Гросбух</span>
+            </button>
+            <button type="button" class="style-card" data-style-choice="graphite">
+              <span class="style-swatch" aria-hidden="true"><span class="style-swatch-rail"></span><span class="style-swatch-body"><span class="style-swatch-ink"></span><span class="style-swatch-bar"></span></span></span>
+              <span class="style-name" data-i18n="styleGraphite">Графіт</span>
+            </button>
+            <button type="button" class="style-card" data-style-choice="nordic">
+              <span class="style-swatch" aria-hidden="true"><span class="style-swatch-rail"></span><span class="style-swatch-body"><span class="style-swatch-ink"></span><span class="style-swatch-bar"></span></span></span>
+              <span class="style-name" data-i18n="styleNordic">Північ</span>
+            </button>
+            <button type="button" class="style-card" data-style-choice="sunny">
+              <span class="style-swatch" aria-hidden="true"><span class="style-swatch-rail"></span><span class="style-swatch-body"><span class="style-swatch-ink"></span><span class="style-swatch-bar"></span></span></span>
+              <span class="style-name" data-i18n="styleSunny">Соняшник</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="panel settings-card" aria-labelledby="settings-currency-title">
+          <h2 id="settings-currency-title" class="panel-title" data-i18n="settingsCurrencyTitle">Валюта</h2>
+          <p class="settings-hint" data-i18n="settingsCurrencyHint">Суми показуються в цій валюті. Наявні записи не перераховуються.</p>
+          <div class="currency-grid">
+            <button type="button" class="currency-btn" data-currency-choice="UAH"><span class="currency-symbol" aria-hidden="true">₴</span><span>UAH</span></button>
+            <button type="button" class="currency-btn" data-currency-choice="USD"><span class="currency-symbol" aria-hidden="true">$</span><span>USD</span></button>
+            <button type="button" class="currency-btn" data-currency-choice="EUR"><span class="currency-symbol" aria-hidden="true">€</span><span>EUR</span></button>
+            <button type="button" class="currency-btn" data-currency-choice="PLN"><span class="currency-symbol" aria-hidden="true">zł</span><span>PLN</span></button>
+            <button type="button" class="currency-btn" data-currency-choice="GBP"><span class="currency-symbol" aria-hidden="true">£</span><span>GBP</span></button>
+            <button type="button" class="currency-btn" data-currency-choice="CAD"><span class="currency-symbol" aria-hidden="true">CA$</span><span>CAD</span></button>
+          </div>
+        </section>
+
+        <section class="panel settings-card" aria-labelledby="settings-folders-title">
+          <h2 id="settings-folders-title" class="panel-title" data-i18n="settingsFoldersTitle">Папки</h2>
+          <p class="settings-hint" data-i18n="settingsFoldersHint">Стандартні папки є завжди. Власні можна перейменувати або видалити.</p>
+          <div id="settings-folders-list" class="settings-folders-list"></div>
+          <button type="button" id="settings-add-folder" class="settings-action" data-i18n="settingsAddFolder">+ Нова папка</button>
+        </section>
+
+        <section class="panel settings-card settings-wide" aria-labelledby="settings-budgets-title">
+          <h2 id="settings-budgets-title" class="panel-title" data-i18n="settingsBudgetsTitle">Бюджети</h2>
+          <p class="settings-hint" data-i18n="settingsBudgetsHint">Місячний ліміт для папки. Застосунок попередить, коли витрачено 80%, і коли ліміт перевищено.</p>
+          <div id="settings-budgets-list" class="settings-folders-list settings-budgets-list"></div>
+        </section>
+
+        <section class="panel settings-card settings-wide" aria-labelledby="settings-recurring-title">
+          <h2 id="settings-recurring-title" class="panel-title" data-i18n="settingsRecurringTitle">Регулярні платежі</h2>
+          <p class="settings-hint" data-i18n="settingsRecurringHint">Оренда, підписки, комуналка: витрата додається сама щомісяця у вказаний день, а в коротших місяцях — в останній.</p>
+          <div id="settings-recurring-list" class="settings-folders-list" hidden></div>
+          <p id="settings-recurring-empty" class="settings-empty" data-i18n="recurringEmpty">Регулярних платежів ще немає.</p>
+          <button type="button" id="settings-add-recurring" class="settings-action" data-i18n="recurringAdd">+ Регулярний платіж</button>
+        </section>
+
+        <section class="panel settings-card" aria-labelledby="settings-stores-title">
+          <h2 id="settings-stores-title" class="panel-title" data-i18n="settingsStoresTitle">Магазини</h2>
+          <p class="settings-hint" data-i18n="settingsStoresText">Додавайте й видаляйте магазини для вибраної папки.</p>
+          <button type="button" id="settings-manage-stores-btn" class="settings-action" data-i18n="manageStoresLink">Керувати магазинами</button>
+        </section>
+
+        <section class="panel settings-card" aria-labelledby="settings-tour-title">
+          <h2 id="settings-tour-title" class="panel-title" data-i18n="settingsTourTitle">Інструктаж</h2>
+          <p class="settings-hint" data-i18n="settingsTourText">Короткий огляд основних функцій застосунку.</p>
+          <button type="button" id="settings-tour-btn" class="settings-action" data-i18n="sidebarTourButton">Показати інструктаж знову</button>
+        </section>
+
+        <section class="panel settings-card" aria-labelledby="settings-install-title">
+          <h2 id="settings-install-title" class="panel-title" data-i18n="settingsInstallTitle">Застосунок на пристрої</h2>
+          <p class="settings-hint" id="settings-install-note" data-i18n="installUnavailable">Щоб встановити застосунок, відкрийте сайт у Chrome, Edge або Safari.</p>
+          <button type="button" id="settings-install-btn" class="settings-action" data-i18n="installButton" hidden>Встановити застосунок</button>
+        </section>
+
+        <section class="panel settings-card" aria-labelledby="settings-data-title">
+          <h2 id="settings-data-title" class="panel-title" data-i18n="settingsDataTitle">Мої дані</h2>
+          <p class="settings-hint" data-i18n="settingsDataHint">Витрати й налаштування зберігаються в Google Firebase і належать вам. Їх можна будь-коли завантажити або видалити.</p>
+          <div class="settings-data-actions">
+            <button type="button" id="settings-export-all" class="settings-action" data-i18n="exportAllData">Завантажити всі мої дані</button>
+            <button type="button" id="settings-delete-account" class="settings-action settings-action-danger" data-i18n="deleteAccountButton">Видалити акаунт</button>
+          </div>
+          <p class="settings-legal">
+            <a href="privacy.html" target="_blank" rel="noopener" data-i18n="privacyLink">Політика конфіденційності</a>
+            <a href="terms.html" target="_blank" rel="noopener" data-i18n="termsLink">Умови використання</a>
+          </p>
+        </section>
+      </div>
     </section>
   </main>
 
@@ -178,6 +317,10 @@
       <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 8h6M9 12h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
       TrackFinance
     </p>
+    <button type="button" id="tab-home" class="tab-btn">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+      <span data-i18n="sidebarHomeLink">Головна</span>
+    </button>
     <button type="button" id="tab-add" class="tab-btn selected">
       <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
       <span data-i18n="tabAdd">Додати</span>
@@ -186,7 +329,222 @@
       <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
       <span data-i18n="tabReports">Звіти</span>
     </button>
+    <button type="button" id="tab-settings" class="tab-btn">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.8v2.4M12 18.8v2.4M21.2 12h-2.4M5.2 12H2.8M18.5 5.5l-1.7 1.7M7.2 16.8l-1.7 1.7M18.5 18.5l-1.7-1.7M7.2 7.2L5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span data-i18n="sidebarTitle">Налаштування</span>
+    </button>
   </nav>
+
+  <!-- Home page: what visitors see before signing in; signed-in users open it from the sidebar.
+       Placed after the app so document-wide selectors such as the tour's '.month-summary' find the app first. -->
+  <section id="landing-screen">
+    <header class="landing-nav">
+      <div class="landing-nav-inner">
+        <p class="landing-brand">
+          <span class="landing-brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M9 8h6M9 12h6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></span>
+          TrackFinance
+        </p>
+        <nav class="landing-nav-links">
+          <a href="#landing-features" data-i18n="landingNavFeatures">Можливості</a>
+          <a href="#landing-steps" data-i18n="landingStepsTitle">Як почати</a>
+        </nav>
+        <div class="landing-lang" role="group" data-i18n-aria-label="sidebarLanguageLabel" aria-label="Мова">
+          <button type="button" class="landing-lang-btn" data-lang="uk">УКР</button>
+          <button type="button" class="landing-lang-btn" data-lang="en">EN</button>
+          <button type="button" class="landing-lang-btn" data-lang="ru">РУС</button>
+        </div>
+        <button type="button" class="landing-cta landing-nav-cta"><span class="landing-cta-label" data-i18n="landingNavSignIn">Увійти</span></button>
+      </div>
+    </header>
+
+    <div class="landing-hero">
+      <!-- The month total, huge and outlined behind everything; counts up with the receipt -->
+      <p class="landing-ghost" aria-hidden="true"><span id="landing-ghost-total">$1284.60</span></p>
+
+      <div class="landing-hero-text">
+        <h1 class="landing-title" data-i18n="landingTitle">Знайте, куди йдуть ваші гроші</h1>
+        <p class="landing-lead" data-i18n="landingLead">Записуйте витрати за папками й магазинами, переглядайте звіти за місяць, рік чи будь-який період і друкуйте їх. Дані синхронізуються на всіх ваших пристроях.</p>
+        <div class="landing-hero-actions">
+          <button type="button" id="google-signin-btn" class="landing-cta landing-cta-main" data-magnetic>
+            <span class="google-g" aria-hidden="true"><svg viewBox="0 0 48 48" width="18" height="18"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg></span>
+            <span class="landing-cta-label" data-i18n="signInButton">Увійти через Google</span>
+          </button>
+          <a class="landing-link" href="#landing-steps" data-i18n="landingHowLink">Як це працює</a>
+        </div>
+        <ul class="landing-facts">
+          <li data-i18n="landingFactFree">Безкоштовно і без реклами</li>
+          <li data-i18n="landingFactSync">Синхронізація між пристроями</li>
+          <li data-i18n="landingFactOffline">Працює офлайн</li>
+        </ul>
+        <p id="login-error" class="login-error" hidden></p>
+      </div>
+
+      <!-- The app's own receipt, printed out of a slot -->
+      <div class="landing-demo" aria-hidden="true">
+        <div class="landing-printer"></div>
+        <div class="landing-paper">
+          <div class="receipt">
+            <div class="month-summary">
+              <p class="month-summary-folder" id="landing-demo-folder"></p>
+              <p class="monthly-total-label"><span data-i18n="monthlyTotalPrefix">Всього за</span> <span id="landing-demo-month"></span></p>
+              <p class="monthly-total" id="landing-demo-total">$1284.60</p>
+            </div>
+            <div id="landing-demo-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Two till-tape bands crossing each other; their speed follows the scroll -->
+    <div class="landing-tape" aria-hidden="true">
+      <div class="landing-tape-band landing-tape-a"><div class="landing-tape-track" id="landing-tape-a"></div></div>
+      <div class="landing-tape-band landing-tape-b"><div class="landing-tape-track" id="landing-tape-b"></div></div>
+    </div>
+
+    <!-- Features: pinned on wide screens while the panels slide sideways -->
+    <section class="landing-hscroll" id="landing-features" aria-labelledby="landing-features-title">
+      <div class="landing-section-head">
+        <h2 id="landing-features-title" data-i18n="landingFeaturesTitle">Що вміє TrackFinance</h2>
+        <p data-i18n="landingFeaturesLead">Усе потрібне для щоденного обліку, без зайвих налаштувань.</p>
+      </div>
+
+      <div class="landing-hscroll-viewport">
+        <div class="landing-hscroll-track">
+          <article class="hpanel hpanel-reports">
+            <div class="hpanel-copy">
+              <h3 data-i18n="landingFeatureReportsTitle">Звіти й друк</h3>
+              <p data-i18n="landingFeatureReportsText">Підсумки за місяць, рік або вибраний період з розбивкою за магазинами. Звіт можна одразу надрукувати.</p>
+            </div>
+            <div class="bento-report" id="landing-demo-report" aria-hidden="true"></div>
+          </article>
+
+          <article class="hpanel hpanel-folders">
+            <div class="hpanel-copy">
+              <h3 data-i18n="landingFeatureFoldersTitle">Папки й магазини</h3>
+              <p data-i18n="landingFeatureFoldersText">Три готові папки: продукти, обов'язкові платежі й інше. Додавайте власні папки та магазини.</p>
+            </div>
+            <div class="bento-chips" id="landing-demo-chips" aria-hidden="true"></div>
+          </article>
+
+          <article class="hpanel hpanel-sync">
+            <div class="hpanel-copy">
+              <h3 data-i18n="landingFeatureSyncTitle">На всіх пристроях</h3>
+              <p data-i18n="landingFeatureSyncText">Увійдіть на телефоні й комп'ютері, і витрати будуть однакові всюди. Застосунок працює й без інтернету.</p>
+            </div>
+            <div class="sync-scene" aria-hidden="true">
+              <div class="sync-phone"><span class="sync-line"></span><span class="sync-line short"></span></div>
+              <div class="sync-laptop"><div class="sync-screen"><span class="sync-line"></span><span class="sync-line short"></span><span class="sync-line"></span></div><div class="sync-base"></div></div>
+              <span class="sync-chip">Costco $86.40</span>
+            </div>
+          </article>
+
+          <article class="hpanel hpanel-styles">
+            <div class="hpanel-copy">
+              <h3 data-i18n="landingFeatureLookTitle">Спробуйте стиль</h3>
+              <p data-i18n="landingFeatureLookText">Натисніть на стиль, і ця сторінка зміниться. Те саме можна обрати в застосунку, разом зі світлою чи темною темою.</p>
+            </div>
+            <div class="bento-style-grid">
+              <button type="button" class="style-card" data-style-choice="classic"><span class="style-swatch" aria-hidden="true"><span class="style-swatch-rail"></span><span class="style-swatch-body"><span class="style-swatch-ink"></span><span class="style-swatch-bar"></span></span></span><span class="style-name" data-i18n="styleClassic">Класичний</span></button>
+              <button type="button" class="style-card" data-style-choice="bank"><span class="style-swatch" aria-hidden="true"><span class="style-swatch-rail"></span><span class="style-swatch-body"><span class="style-swatch-ink"></span><span class="style-swatch-bar"></span></span></span><span class="style-name" data-i18n="styleBank">Банківський</span></button>
+              <button type="button" class="style-card" data-style-choice="minimal"><span class="style-swatch" aria-hidden="true"><span class="style-swatch-rail"></span><span class="style-swatch-body"><span class="style-swatch-ink"></span><span class="style-swatch-bar"></span></span></span><span class="style-name" data-i18n="styleMinimal">Мінімал</span></button>
+              <button type="button" class="style-card" data-style-choice="ledger"><span class="style-swatch" aria-hidden="true"><span class="style-swatch-rail"></span><span class="style-swatch-body"><span class="style-swatch-ink"></span><span class="style-swatch-bar"></span></span></span><span class="style-name" data-i18n="styleLedger">Гросбух</span></button>
+              <button type="button" class="style-card" data-style-choice="graphite"><span class="style-swatch" aria-hidden="true"><span class="style-swatch-rail"></span><span class="style-swatch-body"><span class="style-swatch-ink"></span><span class="style-swatch-bar"></span></span></span><span class="style-name" data-i18n="styleGraphite">Графіт</span></button>
+              <button type="button" class="style-card" data-style-choice="nordic"><span class="style-swatch" aria-hidden="true"><span class="style-swatch-rail"></span><span class="style-swatch-body"><span class="style-swatch-ink"></span><span class="style-swatch-bar"></span></span></span><span class="style-name" data-i18n="styleNordic">Північ</span></button>
+              <button type="button" class="style-card" data-style-choice="sunny"><span class="style-swatch" aria-hidden="true"><span class="style-swatch-rail"></span><span class="style-swatch-body"><span class="style-swatch-ink"></span><span class="style-swatch-bar"></span></span></span><span class="style-name" data-i18n="styleSunny">Соняшник</span></button>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="landing-section" id="landing-steps" aria-labelledby="landing-steps-title">
+      <div class="landing-section-head">
+        <h2 id="landing-steps-title" data-i18n="landingStepsTitle">Як почати</h2>
+      </div>
+      <div class="landing-steps-wrap">
+        <span class="landing-steps-line" aria-hidden="true"><span class="landing-steps-line-fill"></span></span>
+        <ol class="landing-steps">
+          <li>
+            <h3 data-i18n="landingStep1Title">Увійдіть через Google</h3>
+            <p data-i18n="landingStep1Text">Один клік, без окремої реєстрації та паролів.</p>
+          </li>
+          <li>
+            <h3 data-i18n="landingStep2Title">Додайте витрати</h3>
+            <p data-i18n="landingStep2Text">Оберіть папку, магазин і суму. Кілька рядків зберігаються разом.</p>
+          </li>
+          <li>
+            <h3 data-i18n="landingStep3Title">Перегляньте звіт</h3>
+            <p data-i18n="landingStep3Text">Дивіться підсумок за місяць і перемикайтеся між періодами.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="landing-final">
+      <h2 class="landing-final-title" data-i18n="landingCtaTitle">Почніть вести облік сьогодні</h2>
+      <div class="landing-final-row">
+        <p data-i18n="landingCtaText">Перший запис займе менше хвилини.</p>
+        <button type="button" class="landing-cta landing-cta-main landing-cta-inverse" data-magnetic>
+          <span class="google-g" aria-hidden="true"><svg viewBox="0 0 48 48" width="18" height="18"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg></span>
+          <span class="landing-cta-label" data-i18n="signInButton">Увійти через Google</span>
+        </button>
+      </div>
+    </section>
+
+    <footer class="landing-footer">
+      <span class="landing-brand landing-brand-small">TrackFinance</span>
+      <nav class="landing-footer-links">
+        <a href="privacy.html" data-i18n="privacyLink">Політика конфіденційності</a>
+        <a href="terms.html" data-i18n="termsLink">Умови використання</a>
+      </nav>
+      <span><span data-i18n="landingFooterAuthor">Автор</span> <a href="https://github.com/alexITworks-as" target="_blank" rel="noopener">Alex</a></span>
+    </footer>
+  </section>
+
+  <!-- Short notices, e.g. a budget crossing 80% or 100% -->
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <!-- Shared in-app dialog (dialog.js): text prompts, the edit form and confirmations -->
+  <div id="app-dialog" class="dialog-backdrop" hidden>
+    <form id="app-dialog-form" class="dialog" role="dialog" aria-modal="true" aria-labelledby="app-dialog-title" novalidate>
+      <div class="dialog-head">
+        <h2 id="app-dialog-title"></h2>
+        <button type="button" id="app-dialog-close" class="icon-btn" data-i18n-aria-label="photoDialogCloseAria" aria-label="Закрити">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <p id="app-dialog-message" class="dialog-message" hidden></p>
+      <div id="app-dialog-fields" class="dialog-fields"></div>
+      <p id="app-dialog-error" class="dialog-error" role="alert" hidden></p>
+      <div class="dialog-actions">
+        <button type="button" id="app-dialog-cancel" class="dialog-btn"></button>
+        <button type="submit" id="app-dialog-confirm" class="dialog-btn dialog-btn-primary"></button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Profile photo: drop a file on the zone, tap it, or pick one from the device -->
+  <div id="photo-dialog" class="photo-dialog-backdrop" hidden>
+    <div class="photo-dialog" role="dialog" aria-modal="true" aria-labelledby="photo-dialog-title">
+      <div class="photo-dialog-head">
+        <h2 id="photo-dialog-title" data-i18n="accountPhotoDialogTitle">Фото профілю</h2>
+        <button type="button" id="photo-dialog-close" class="icon-btn" data-i18n-aria-label="photoDialogCloseAria" aria-label="Закрити">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <label class="photo-drop" id="photo-drop" for="account-photo-input">
+        <span class="photo-drop-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="26" height="26"><path d="M12 16V4M7 9l5-5 5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+        <span class="photo-drop-title" data-i18n="accountPhotoDropTitle">Перетягніть фото сюди</span>
+        <span class="photo-drop-hint" data-i18n="accountPhotoDropHint">JPG, PNG або WebP</span>
+      </label>
+
+      <p class="photo-dialog-or"><span data-i18n="accountPhotoOr">або</span></p>
+      <button type="button" id="photo-dialog-pick" class="photo-dialog-pick" data-i18n="accountPhotoPick">Вибрати з пристрою</button>
+      <p class="account-photo-error" id="account-photo-error" role="alert" hidden></p>
+      <input type="file" id="account-photo-input" accept="image/*" hidden>
+    </div>
+  </div>
 
   <div id="onboarding-lang" class="onboarding-overlay" hidden>
     <div class="onboarding-card" role="dialog" aria-modal="true" aria-labelledby="onboarding-lang-title">
@@ -214,7 +572,10 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=17"></script>
+  <!-- Animation library for the home page; the page works without it -->
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script type="module" src="app.js?v=33"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
